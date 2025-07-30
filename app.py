@@ -1,10 +1,15 @@
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, request, url_for, session
 import sqlite3
 app = Flask(__name__)
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+app.secret_key = os.getenv('SECRET_KEY')
 
 @app.route("/")
 def landing():
+    #This is supposed to be for the landing page
     return render_template('index.html')
 
 
@@ -36,8 +41,8 @@ def login():
         conn.close()
 
         if user:
-            name = user[1]
-            return render_template('home.html', name=name)
+            session['name'] = user[1] 
+            return redirect(url_for('home'))  
         else:
             return redirect(url_for('landing'))
 
@@ -65,6 +70,13 @@ def signup():
             conn.close()
             return render_template('signup.html', error="Email already exists.")
     return render_template('signup.html')
+
+@app.route("/home")
+def home():
+    name = session.get('name') 
+    if not name:
+        return redirect(url_for('login')) 
+    return render_template('home.html', name=name)
 
 
 if __name__ == '__main__':
