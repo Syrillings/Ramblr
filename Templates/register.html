@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login - Candle</title>
+  <title>Register - Ramblr</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     body {
-      background-color: #1e3a8a; /* Thick blue background */
+      background-color: #1e3a8a; /* Light blue */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -22,44 +22,43 @@
     }
 
     .container {
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-      width: 100%;
-      max-width: 400px;
+      background-color: #fff;
       padding: 40px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      max-width: 420px;
+      width: 100%;
     }
 
     .brand {
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 28px;
-      font-weight: bold;
-      color: #1e3a8a;
-      margin-bottom: 20px;
       gap: 10px;
-      text-align: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
     }
 
-    .logo {
+    .brand img {
       width: 32px;
       height: 32px;
       object-fit: contain;
     }
 
-    .header {
+    .brand span {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e3a8a;
+    }
+
+    .brand-sub {
       text-align: center;
-      margin-bottom: 30px;
+      font-size: 14px;
+      color: #777;
+      margin-bottom: 20px;
     }
 
-    .header h2 {
-      font-size: 24px;
-      color: #333;
-      font-weight: normal;
-    }
-
-    .login-form {
+    form {
       display: flex;
       flex-direction: column;
     }
@@ -70,57 +69,55 @@
 
     .form-group label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-size: 14px;
-      color: #555;
+      color: #333;
     }
 
     .form-group input {
       width: 100%;
-      padding: 12px 15px;
+      padding: 12px;
       border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 16px;
+      border-radius: 6px;
+      font-size: 15px;
     }
 
     .form-group input:focus {
       outline: none;
-      border-color: #1e3a8a;
+      border-color: #5C3DFF;
     }
 
     .submit-btn {
       background-color: #1e3a8a;
       color: white;
-      border: none;
       padding: 12px;
-      border-radius: 5px;
       font-size: 16px;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: 0.3s;
       margin-top: 10px;
     }
 
     .submit-btn:hover {
-      background-color: #163072;
+      background-color: rgba(24, 60, 133, 1);
     }
 
     .footer {
-      text-align: center;
       margin-top: 20px;
+      text-align: center;
       font-size: 14px;
       color: #555;
     }
 
     .footer a {
-      color: #1e3a8a;
+      color: #3366cc;
       text-decoration: none;
       font-weight: bold;
-      transition: color 0.3s;
     }
 
     .footer a:hover {
       text-decoration: underline;
-      color: #163072;
     }
 
     @media (max-width: 480px) {
@@ -128,12 +125,8 @@
         padding: 30px 20px;
       }
 
-      .brand {
+      .brand span {
         font-size: 24px;
-      }
-
-      .header h2 {
-        font-size: 20px;
       }
 
       .submit-btn {
@@ -146,30 +139,32 @@
 <body>
   <div class="container">
     <div class="brand">
-      <img src="{{ url_for('static', filename='img/ramblrr.png') }}" alt="Ramblr Logo" class="logo">
+      <img src="{{ url_for('static', filename='img/ramblrr.png') }}" alt="ramblr">
       <span>Ramblr</span>
     </div>
+    <div class="brand-sub">Create your student account</div>
 
-    <div class="header">
-      <h2>Login</h2>
-    </div>
-
-    <form class="login-form" method="POST" action="/login">
+    <form method="POST" action="/register">
       <div class="form-group">
         <label for="username">Username</label>
-        <input type="text" id="username" name="username" placeholder="Enter your username" required>
+        <input type="text" id="username" name="username" placeholder="Choose a username" required minlength="3" maxlength="20" />
+      </div>     
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="text" id="email" name="email" placeholder="Enter your email" required />
       </div>
 
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+        <input type="password" id="password" name="password" placeholder="Create a strong password" required minlength="8" />
       </div>
 
-      <button type="submit" class="submit-btn">Login</button>
+      <button type="submit" class="submit-btn">Register</button>
     </form>
 
     <div class="footer">
-      <p>Don't have an account? <a href="/register">Register</a></p>
+      <p>Already have an account? <a href="/login">Log in</a></p>
     </div>
   </div>
 </body>
