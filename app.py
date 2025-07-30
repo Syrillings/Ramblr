@@ -68,7 +68,7 @@ def signup():
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             conn.close()
-            return render_template('signup.html', error="Email already exists.")
+            return render_template('register.html', error="Email already exists.")
     return render_template('register.html')
 
 @app.route("/home")
