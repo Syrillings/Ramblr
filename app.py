@@ -7,10 +7,10 @@ import os
 load_dotenv()
 app.secret_key = os.getenv('SECRET_KEY')
 
-@app.route("/")
+@app.route("/landingPage")
 def landing():
     #This is supposed to be for the landing page
-    return render_template('index.html')
+    return render_template('landingPage.html')
 
 
 def init_db():
@@ -49,7 +49,7 @@ def login():
     return render_template('login.html')
 
 
-@app.route("/signup", methods=['GET', 'POST'])
+@app.route("/register", methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
         name = request.form['name']
@@ -69,7 +69,7 @@ def signup():
         except sqlite3.IntegrityError:
             conn.close()
             return render_template('signup.html', error="Email already exists.")
-    return render_template('signup.html')
+    return render_template('register.html')
 
 @app.route("/home")
 def home():
