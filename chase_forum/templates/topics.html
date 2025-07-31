@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Topics</title>
+</head>
+<body>
+    <h1>All Forum Topics</h1>
+    <ul>
+        {% for topic in topics %}
+            <li>
+                <strong>{{ topic[2] }}</strong><br>
+                <em>by {{ topic[1] }}</em><br>
+                {{ topic[3] }}
+            </li><br>
+        {% endfor %}
+    </ul>
+    <a href="/post">Post a new topic</a>
+</body>
+</html>

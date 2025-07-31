@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ramblr</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #1e3a8a;
+      color: #fff;
+      line-height: 1.6;
+      padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .logo img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+
+    .login-btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.3s ease;
+      margin-left: 10px;
+    }
+
+    .login-btn:hover {
+      background-color: #2c80c2;
+    }
+
+    .welcome-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .forumPic {
+      width: 45%;
+      max-width: 100%;
+      height: auto;
+      margin: 10px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+
+    .welcome-section h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+
+    .welcome-section p {
+      margin-bottom: 25px;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+
+    .btn-outline {
+      border: 1px solid #fff;
+      color: #fff;
+      background-color: transparent;
+    }
+
+    .btn-outline:hover {
+      background-color: #fff;
+      color: #1e3a8a;
+    }
+
+    .btn-primary {
+      background-color: #fff;
+      color: #1e3a8a;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background-color: #eceaea;
+    }
+
+    .discussions-section {
+      margin-bottom: 40px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      color: black;
+    }
+
+    .discussions-section h3 {
+      font-size: 22px;
+      margin-bottom: 20px;
+      color: #2c3e50;
+      border-bottom: 1px solid #ecf0f1;
+      padding-bottom: 10px;
+    }
+
+    .discussion-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .discussion-table tr:not(:last-child) {
+      border-bottom: 1px solid #ecf0f1;
+    }
+
+    .discussion-table td {
+      padding: 15px 0;
+    }
+
+    .discussion-title {
+      font-weight: 500;
+      color: #1e3a8a;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .discussion-title:hover {
+      color: #2c80c2;
+    }
+
+    .discussion-meta {
+      color: #7f8c8d;
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .about-section {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 40px;
+      font-size: 15px;
+      color: black;
+      text-align: center;
+    }
+
+    .about-section img {
+      max-width: 100%;
+      height: auto;
+      margin: 15px 10px;
+      border-radius: 8px;
+    }
+
+    .cta-section {
+      text-align: center;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      color: black;
+    }
+
+    .cta-section h3 {
+      font-size: 22px;
+      margin-bottom: 15px;
+    }
+
+    .cta-section .btn-primary {
+      background-color: #1e3a8a;
+      color: white;
+    }
+
+    .cta-section .btn-primary:hover {
+      background-color: #162e6e;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #ccc;
+      margin: 30px 0;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .forumPic {
+        width: 100%;
+        height: auto;
+      }
+
+      .login-btn {
+        margin-left: 0;
+      }
+
+      .discussion-meta {
+        text-align: left;
+      }
+
+      .discussion-table td {
+        display: block;
+        width: 100%;
+        padding: 10px 0;
+      }
+
+      .discussion-table tr {
+        display: block;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #ecf0f1;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .about-section img {
+        margin: 10px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <img src="{{ url_for('static', filename='img/ramblrr.png') }}" alt="ramblr">
+      <span>Ramblr</span>
+    </div>
+    <div>
+      <a href="/register"><button class="btn btn-primary">Register</button></a>
+      <a href="/login"><button class="btn btn-primary">Login</button></a>
+    </div>
+  </header>
+
+  <main>
+    <section class="welcome-section">
+      <h2>Welcome to Ramblr</h2>
+      <p>Join the conversation, Learn, Share, Connect.</p>
+      <div class="action-buttons">
+        <a href="/login" class="btn btn-outline">Post a Topic</a>
+        <a href="/register" class="btn btn-primary">Register Now</a>
+      </div>
+    </section>
+
+    <hr>
+
+    <section class="about-section">
+      Ramblr is a dynamic online forum built for developers, designers, tech enthusiasts, and curious learners to connect, collaborate, and grow together. Whether you're a seasoned professional or just taking your first steps into the tech world, Ramblr offers a welcoming space to ask questions, share insights, post ideas, and engage in meaningful discussions.<br><br>
+
+      <img src="{{ url_for('static', filename='img/forum1.jpg') }}" alt="forumPic" class="forumPic">
+      <img src="{{ url_for('static', filename='img/forum2.jpg') }}" alt="forumPic" class="forumPic">
+
+      <br><br>
+      Our platform encourages open dialogue on a wide range of topics — from coding best practices and design trends to emerging technologies and career advice. With a clean interface and an intuitive posting system, users can start conversations, contribute answers, and build a reputation within a supportive learning environment.<br><br>
+
+      Join the Ramblr community today — because great ideas are meant to be shared, and growth happens when we learn together.
+    </section>
+
+    <hr>
+
+    <section class="discussions-section">
+      <h3>Popular Discussions</h3>
+      <table class="discussion-table">
+        <tr>
+          <td class="discussion-title">How to learn Python?</td>
+          <td class="discussion-meta">12 replies. 2h ago</td>
+        </tr>
+        <tr>
+          <td class="discussion-title">Best UI Practices</td>
+          <td class="discussion-meta">8 replies. 1h ago</td>
+        </tr>
+        <tr>
+          <td class="discussion-title">Beginner Tips</td>
+          <td class="discussion-meta">5 replies. 3h ago</td>
+        </tr>
+        <tr>
+          <td class="discussion-title">For JavaScript</td>
+          <td class="discussion-meta">No replies yet</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="cta-section">
+      <h3>Start Your First Discussion Today</h3>
+      <a href="/login"><button class=" btn btn-primary">Sign In</button></a>
+    </section>
+  </main>
+</body>
+</html>
+
