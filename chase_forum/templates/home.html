@@ -112,7 +112,7 @@
         </div>
       {% endfor %}
 
-      {% if comments.get(topic.id)|length >= 3 %}
+      {% if comments.get(topic.id, [])|length >= 3 %} 
         <a href="/topic/{{ topic.id }}">See all comments →</a>
       {% endif %}
 
