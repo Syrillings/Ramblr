@@ -69,23 +69,39 @@ def home():
 
     # Get all topics
     cursor.execute("SELECT * FROM topics ORDER BY id DESC")
-    topics = cursor.fetchall()
+    topics_raw = cursor.fetchall()
+    topics = []
+    for topic in topics_raw:
+        topic_id, username, title, content = topic
+        truncated_content = content[:100] + '...' if len(content) > 40 else content
+        topics.append({
+            'id': topic_id,
+            'username': username,
+            'title': title,
+            'truncated_content': truncated_content,
+            'full_content': content
+            
+        })
 
     # Get all comments and group them by topic_id
     cursor.execute("SELECT topic_id, username, comment FROM comments")
     all_comments = cursor.fetchall()
 
+
     comments_dict = {}
     for topic_id, username, comment in all_comments:
         if topic_id not in comments_dict:
             comments_dict[topic_id] = []
-        comments_dict[topic_id].append((username, comment))
-
+        if len(comments_dict[topic_id]) < 3:  # Limit to 3 comments per topic
+            comments_dict[topic_id].append((username, comment))
     conn.close()
 
     return render_template('home.html', topics=topics, comments=comments_dict)
+@app.route('/test')
+def test():
+    return "Flask is working" # Simple test route to check if Flask is running
 
-@app.route('/topic/<int:topic_id>', methods=['GET'])
+@app.route('/topic/<int:topic_id>')
 def view_topic(topic_id):
     conn = sqlite3.connect('forum.db')
     cursor = conn.cursor()
@@ -96,7 +112,11 @@ def view_topic(topic_id):
     comments = cursor.fetchall()
     conn.close()
 
-    return render_template('topic_detail.html', topic=topic, comments=comments)
+    if topic:
+        topic_id, username, title, content = topic
+        return render_template("topic_detail.html", title=title, username=username, content=content, comments=comments)
+    else:
+        return "Topic not found", 404
 
 @app.route('/comment/<int:topic_id>', methods=['POST'])
 def comment(topic_id):

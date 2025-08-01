@@ -1,0 +1,20 @@
+<h2>{{ title }}</h2>
+<p><strong>Posted by:</strong> {{ username }}</p>
+<p>{{ content }}</p>
+
+<hr>
+<h4>Comments:</h4>
+{% for comment in comments %}
+  <div class="comment">
+    <strong>{{ comment[2] }}:</strong> {{ comment[3] }} 
+    <!-- this is to access 'username' and 'comment' which are at index 2 and 3 -->
+  </div>
+{% endfor %}
+
+<!-- Add a comment -->
+<form action="/comment/{{ request.path.split('/')[-1] }}" method="POST">
+  <input type="text" name="comment" placeholder="Write a comment..." required>
+  <button type="submit">Post Comment</button>
+</form>
+
+<p><a href="/home">← Back to Home</a></p>

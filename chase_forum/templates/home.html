@@ -96,28 +96,37 @@
   <div class="container">
     <h2>Forum Topics</h2>
 
-    {% for topic in topics %}
-      <div class="post">
-        <h3>{{ topic[2] }}</h3>  <!-- Title -->
-        <p>{{ topic[3] }}</p>    <!-- Content -->
-        <p class="username">Posted by: {{ topic[1] }}</p>  <!-- Username -->
+{% for topic in topics %}
+  <div class="post">
+    <h3>{{ topic.title }}</h3>
+    <a href="/topic/{{ topic.id }}">
+      <p>{{ topic.truncated_content }}</p>
+    </a>
+    <p class="username">Posted by: {{ topic.username }}</p>
 
-        <div class="comments">
-          <strong>Comments:</strong>
-          {% for comment in comments.get(topic[0], []) %}
-            <div class="comment">
-              <strong>{{ comment[0] }}:</strong> {{ comment[1] }}
-            </div>
-          {% endfor %}
-
-          <!-- Comment form -->
-          <form class="comment-form" action="/comment/{{ topic[0] }}" method="POST">
-            <input type="text" name="comment" placeholder="Write a comment..." required>
-            <button type="submit">Post</button>
-          </form>
+    <div class="comments">
+      <strong>Comments:</strong>
+      {% for comment in comments.get(topic.id, []) %}
+        <div class="comment">
+          <strong>{{ comment[0] }}:</strong> {{ comment[1] }}
         </div>
-      </div>
-    {% endfor %}
+      {% endfor %}
+
+      {% if comments.get(topic.id)|length >= 3 %}
+        <a href="/topic/{{ topic.id }}">See all comments →</a>
+      {% endif %}
+
+      <form class="comment-form" action="/comment/{{ topic.id }}" method="POST">
+        <input type="text" name="comment" placeholder="Write a comment..." required>
+        <button type="submit">Post</button>
+      </form>
+    </div>
+  </div>
+{% endfor %}
+
+    <div class="post">
+      <p>No more topics. Please check back later.</p>
+    </div>
   </div>
 </body>
 </html>
