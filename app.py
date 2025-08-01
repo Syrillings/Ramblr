@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-app.secret_key = os.getenv('SECRET_KEY')
+app.secret_key = os.getenv('SECRET_KEY') or 'default-very-secret-key-12345'
 
 @app.route("/")
 def landing():
@@ -19,9 +19,13 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
+            name TEXT,
+            email TEXT UNIQUE,
+            password TEXT,
+            post TEXT DEFAULT '',
+            comment TEXT DEFAULT '',
+            comment_id INTEGER DEFAULT 0
+            
         )
     ''')
     conn.commit()
@@ -71,12 +75,72 @@ def signup():
             return render_template('signup.html', error="Email already exists.")
     return render_template('signup.html')
 
-@app.route("/home")
+@app.route("/home", methods=['GET'])
 def home():
     name = session.get('name') 
     if not name:
-        return redirect(url_for('login')) 
-    return render_template('home.html', name=name)
+        return redirect(url_for('login'))
+    conn = sqlite3.connect('Ramblr.db')
+    cursor = conn.cursor()
+
+    # Get all topics
+    cursor.execute("SELECT id, post FROM Users ORDER BY id DESC")
+    posts = cursor.fetchall()
+
+    # Get all comments and group them by topic_id
+   #REMEMBER LATER cursor.execute("SELECT topic_id, username, comment FROM comments")
+    #all_comments = cursor.fetchall()
+
+    ''' comments_dict = {}
+    for topic_id, username, comment in all_comments:
+        if topic_id not in comments_dict:
+            comments_dict[topic_id] = []
+        comments_dict[topic_id].append((username, comment))
+
+    conn.close()
+    '''
+    return render_template('home.html', posts=posts, name=name)
+
+# Comment logic starts here
+def comment(id):
+    if 'name' not in session:
+        return redirect('/login')
+
+    comment_text = request.form['comment']
+    username = session['username']
+
+    conn = sqlite3.connect('Ramblr.db')
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO Users (topic_id, comment) VALUES (?, ?)', (id, comment_text))
+    conn.commit()
+    conn.close()
+
+    return redirect('/home')
+
+@app.route("/post_details/<int:post_id>", methods=['GET', 'POST'])
+def post_details(post_id):
+    conn = sqlite3.connect('Ramblr.db')
+    cursor = conn.cursor()
+
+    # Get post details
+    cursor.execute("SELECT * FROM Users WHERE id = ?", (post_id,))
+    post = cursor.fetchone()
+    
+    if not post:
+        return "Post not found", 404
+
+    # Get comments for the post
+    cursor.execute("SELECT * FROM Users WHERE id = ?", (post_id,))
+    comments = cursor.fetchall()
+
+    if request.method == 'POST':
+        comment_text = request.form['comment']
+        username = session.get('name', 'Anonymous')
+        cursor.execute('INSERT INTO Users (id, name, comment) VALUES (?, ?, ?)', (post_id, username, comment_text))
+        conn.commit()
+
+    conn.close()
+    return render_template('post_details.html', post=post, comments=comments)
 
 
 if __name__ == '__main__':

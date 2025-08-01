@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ post['title'] }}</title>
+</head>
+<body>
+<h1>Post #{{ post[0] }}</h1>
+<p>{{ post[4] }}</p>
+<p>Author: {{ post[1] }}</p>
+<!-- Date not available -->
+<a href="/home">Back to Home</a>
+
+<h3>Comments</h3>
+{% for comment in comments %}
+    <div>
+        <p><strong>{{ comment[2] }}:</strong> {{ comment[5] }}</p>
+    </div>
+{% endfor %}
+
+<form method="POST">
+    <label for="comment">Add a comment:</label><br>
+    <input type="text" id="comment" name="comment" required>
+    <button type="submit">Submit</button>
+</form>
+
+</body>
+</html>
