@@ -10,6 +10,44 @@
       margin: 0;
       padding: 0;
     }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+
+
+    .btn-primary {
+      background-color: #fff;
+      color: #1e3a8a;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background-color: #f3f1f1;
+    }
+
+    .likesbtn{
+      padding: 8px 16px;
+      background-color: #004aad;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.3s ease;
+    }
+
+    .likesbtn.unlike {
+      background-color: #aaa;
+      color: white;
+    }
+    
+
     .container {
       max-width: 800px;
       margin: auto;
@@ -90,26 +128,42 @@
 <body>
   <div class="top-nav">
     <span>Welcome, {{ session['username'] }}</span>
-    <a href="/post">Post a Topic</a>
-    <a href="/logout">Logout</a>
+    <a href="/post"><button class="btn btn-primary">Post a Topic</button></a>
+    <a href="/logout"><button class="btn btn-primary">Logout</button></a>
   </div>
   <div class="container">
-    <h2>Forum Topics</h2>
+    <h2>Feeds</h2>
 
     {% for topic in topics %}
-      <div class="post">
+      <div class="post" style="position:relative;">
+    
         <h3>{{ topic[2] }}</h3>  <!-- Title -->
+        {% if session['username'] == topic[1] %}
+          <form action="/delete/{{ topic[0] }}" method="POST" style="position:absolute; top:16px; right:16px; margin:0;">
+            <button type="submit" class="btn btn-primary" style="background-color:#e53935; color:white; padding:6px 12px; border-radius:4px; border:none; font-size:13px; cursor:pointer;">Delete</button>
+          </form>
+        {% endif %}
         <p>{{ topic[3] }}</p>    <!-- Content -->
         <p class="username">Posted by: {{ topic[1] }}</p>  <!-- Username -->
 
+          <!-- Like button and count beside comments -->
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:10px;">
+            <form action="/like/{{ topic[0] }}" method="POST" style="display:inline-block;">
+              {% if user_likes and topic[0] in user_likes %}
+                <button type="submit" class="likesbtn">Like</button>
+              {% else %}
+                <button type="submit" class="likesbtn">Like</button>
+              {% endif %}
+            </form>
+            <span style="color:#004aad; font-weight:500;">{{ likes.get(topic[0], 0) }} Likes</span>
+          </div>
+
         <div class="comments">
-          <strong>Comments:</strong>
           {% for comment in comments.get(topic[0], []) %}
             <div class="comment">
               <strong>{{ comment[0] }}:</strong> {{ comment[1] }}
             </div>
           {% endfor %}
-
           <!-- Comment form -->
           <form class="comment-form" action="/comment/{{ topic[0] }}" method="POST">
             <input type="text" name="comment" placeholder="Write a comment..." required>
