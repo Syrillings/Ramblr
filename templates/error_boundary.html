@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Invalid Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #1e3a8a; /* Light blue */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .error-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff4d4d; /* Red for error */
+            margin-bottom: 10px;
+        }
+
+        .error-message {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .error-link {
+            display: inline-block;
+            background-color: #1e3a8a;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .error-link:hover {
+            background-color: rgba(24, 60, 133, 1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="error-title">Invalid Username or Password</h1>
+        <p class="error-message">The username or password you entered is incorrect. Please try again.</p>
+        <a href="/login" class="error-link">Go back to Login</a>
+    </div>
+</body>
+</html>
