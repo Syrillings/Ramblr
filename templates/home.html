@@ -113,17 +113,15 @@
     </a>
     <p class="username">Posted by: {{ topic.username }}</p>
 
-    <div class="like-form">
-      <form method="POST" action="/like/{{ topic.id }}" style="display: inline;">
-        <button type="submit">
-          {% if topic.id in user_liked_topic_ids %}
+      <button onclick="toggleLike('{{ topic.id }}')" id="like-btn-{{ topic.id }}">
+        <span id="like-icon-{{ topic.id }}">
+          {% if topic.likes > 0%}
             ❤️ {{ topic.likes }}
           {% else %}
-            🤍 {{ topic.likes }}
+            🤍
           {% endif %}
-        </button>
-      </form>
-    </div>
+        </span>
+      </button>
 
     <div class="comments">
       <strong>Comments:</strong>
@@ -149,5 +147,30 @@
       <p>No more topics. Please check back later.</p>
     </div>
   </div>
+<script>
+function toggleLike(topicId) {
+  fetch(`/like/${topicId}`, {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const icon = document.getElementById(`like-icon-${topicId}`);
+    const likeCount = data.likes;
+
+    if (likeCount > 0) {
+      icon.textContent = data.liked ? `❤️ ${likeCount}` : `🤍 ${likeCount}`;
+    } else {
+      icon.textContent = `🤍`;
+    }
+  })
+  .catch(err => console.error("Toggle like error:", err));
+}
+</script>
+
+
+
 </body>
 </html>

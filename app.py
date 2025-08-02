@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 import sqlite3
 
 app = Flask(__name__)
@@ -79,17 +79,22 @@ def home():
         ORDER BY topics.id DESC
     ''')
     topics_raw = cursor.fetchall()
+    user_liked_topic_ids = set()
     topics = []
+    
     for topic in topics_raw:
         topic_id, username, title, content, like_count = topic
         truncated_content = content[:100] + '...' if len(content) > 40 else content
+        liked_by_user = topic_id in user_liked_topic_ids
+
         topics.append({
             'id': topic_id,
             'username': username,
             'title': title,
             'truncated_content': truncated_content,
             'full_content': content,
-            'likes': like_count
+            'likes': like_count,
+            'liked_by_user': liked_by_user
         })
 
     # Get limited comments per topic
@@ -103,7 +108,7 @@ def home():
             comments_dict[topic_id].append((username, comment))
 
     # Get user's liked topics if logged in
-    user_liked_topic_ids = set()
+    
     if 'user_id' in session:
         cursor.execute("SELECT topic_id FROM likes WHERE user_id = ?", (session['user_id'],))
         user_liked_topic_ids = {row[0] for row in cursor.fetchall()}
@@ -111,16 +116,18 @@ def home():
     conn.close()
     return render_template('home.html', topics=topics, comments=comments_dict, user_liked_topic_ids=user_liked_topic_ids)
 
+
+
 @app.route('/like/<int:topic_id>', methods=['POST'])
 def like(topic_id):
     if 'user_id' not in session:
-        return redirect("/login")
+        return jsonify({'error': 'Not logged in'}), 401
 
     user_id = session['user_id']
     conn = sqlite3.connect("forum.db")
     c = conn.cursor()
 
-    # Check if the user already liked this topic
+    # Check if the user already liked the post
     c.execute("SELECT 1 FROM likes WHERE user_id = ? AND topic_id = ?", (user_id, topic_id))
     already_liked = c.fetchone()
 
@@ -129,14 +136,18 @@ def like(topic_id):
     else:
         c.execute("INSERT INTO likes (user_id, topic_id) VALUES (?, ?)", (user_id, topic_id))
 
+    # Get updated like count
+    c.execute("SELECT COUNT(*) FROM likes WHERE topic_id = ?", (topic_id,))
+    like_count = c.fetchone()[0]
+
     conn.commit()
     conn.close()
-    # Check if request came from topic detail page
-    referer = request.referrer
-    if referer and '/topic/' in referer:
-        return redirect(referer)
-    else:
-        return redirect("/home")
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'likes': like_count, 'liked': not already_liked})
+
+    # Fallback if JS isn't used
+    return redirect(request.referrer or '/home')
 
 @app.route('/test')
 def test():
