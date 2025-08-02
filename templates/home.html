@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Home - Forum</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f4ff;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #004aad;
+      margin-bottom: 30px;
+    }
+    .post {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .post h3 {
+      margin: 0;
+      color: #004aad;
+    }
+    .post p {
+      margin: 10px 0;
+      color: #333;
+    }
+    .username {
+      font-size: 14px;
+      color: #555;
+    }
+    .top-nav {
+      background-color: #004aad;
+      color: white;
+      padding: 10px 20px;
+      text-align: right;
+    }
+    .top-nav a {
+      color: white;
+      margin-left: 20px;
+      text-decoration: none;
+    }
+    .top-nav a:hover {
+      text-decoration: underline;
+    }
+    .comments {
+      margin-top: 15px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+    .comment {
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    .comment strong {
+      color: #004aad;
+    }
+    .comment-form {
+      margin-top: 10px;
+    }
+    .comment-form input[type="text"] {
+      width: 80%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .comment-form button {
+      padding: 8px 12px;
+      background-color: #004aad;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .comment-form button:hover {
+      background-color: #003b8c;
+    }
+    .like-form {
+      margin: 10px 0;
+    }
+    .like-form button {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <span>Welcome, {{ session['username'] }}</span>
+    <a href="/post">Post a Topic</a>
+    <a href="/logout">Logout</a>
+  </div>
+  <div class="container">
+    <h2>Forum Topics</h2>
+
+{% for topic in topics %}
+  <div class="post">
+    <h3>{{ topic.title }}</h3>
+    <a href="/topic/{{ topic.id }}">
+      <p>{{ topic.truncated_content }}</p>
+    </a>
+    <p class="username">Posted by: {{ topic.username }}</p>
+
+      <button onclick="toggleLike('{{ topic.id }}')" id="like-btn-{{ topic.id }}">
+        <span id="like-icon-{{ topic.id }}">
+          {% if topic.likes > 0%}
+            ❤️ {{ topic.likes }}
+          {% else %}
+            🤍
+          {% endif %}
+        </span>
+      </button>
+
+    <div class="comments">
+      <strong>Comments:</strong>
+      {% for comment in comments.get(topic.id, []) %}
+        <div class="comment">
+          <strong>{{ comment[0] }}:</strong> {{ comment[1] }}
+        </div>
+      {% endfor %}
+
+      {% if comments.get(topic.id, [])|length >= 3 %} 
+        <a href="/topic/{{ topic.id }}">See all comments →</a>
+      {% endif %}
+
+      <form class="comment-form" action="/comment/{{ topic.id }}" method="POST">
+        <input type="text" name="comment" placeholder="Write a comment..." required>
+        <button type="submit">Post</button>
+      </form>
+    </div>
+  </div>
+{% endfor %}
+
+    <div class="post">
+      <p>No more topics. Please check back later.</p>
+    </div>
+  </div>
+<script>
+function toggleLike(topicId) {
+  fetch(`/like/${topicId}`, {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const icon = document.getElementById(`like-icon-${topicId}`);
+    const likeCount = data.likes;
+
+    if (likeCount > 0) {
+      icon.textContent = data.liked ? `❤️ ${likeCount}` : `🤍 ${likeCount}`;
+    } else {
+      icon.textContent = `🤍`;
+    }
+  })
+  .catch(err => console.error("Toggle like error:", err));
+}
+</script>
+
+
+
+</body>
+</html>
