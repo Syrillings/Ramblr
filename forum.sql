@@ -1,1 +1,1 @@
-select * from comments where id = 2
+DROP TABLE IF EXISTS likes;

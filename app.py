@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, session
 import sqlite3
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Needed to use sessions
+app.secret_key = 'your_secret_key'
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -33,6 +33,7 @@ def login():
 
         if user:
             session['username'] = username
+            session['user_id'] = user[0] 
             return redirect('/home')
         else:
             return "Invalid username or password. Try again."
@@ -41,6 +42,7 @@ def login():
 @app.route('/logout')
 def logout():
     session.pop('username', None)
+    session.pop('user_id', None)
     return redirect('/login')
 
 @app.route('/post', methods=['GET', 'POST'])
@@ -62,61 +64,125 @@ def post():
         return redirect('/home')
     return render_template('post.html')
 
-@app.route('/home', methods=['GET', 'POST'])
+@app.route('/home', methods=['GET'])
 def home():
     conn = sqlite3.connect('forum.db')
     cursor = conn.cursor()
 
-    # Get all topics
-    cursor.execute("SELECT * FROM topics ORDER BY id DESC")
+    # Get topics with like counts
+    cursor.execute('''
+        SELECT topics.id, topics.username, topics.title, topics.content,
+               COUNT(likes.id) AS like_count
+        FROM topics
+        LEFT JOIN likes ON topics.id = likes.topic_id
+        GROUP BY topics.id
+        ORDER BY topics.id DESC
+    ''')
     topics_raw = cursor.fetchall()
     topics = []
     for topic in topics_raw:
-        topic_id, username, title, content = topic
+        topic_id, username, title, content, like_count = topic
         truncated_content = content[:100] + '...' if len(content) > 40 else content
         topics.append({
             'id': topic_id,
             'username': username,
             'title': title,
             'truncated_content': truncated_content,
-            'full_content': content
-            
+            'full_content': content,
+            'likes': like_count
         })
 
-    # Get all comments and group them by topic_id
+    # Get limited comments per topic
     cursor.execute("SELECT topic_id, username, comment FROM comments")
     all_comments = cursor.fetchall()
-
-
     comments_dict = {}
     for topic_id, username, comment in all_comments:
         if topic_id not in comments_dict:
             comments_dict[topic_id] = []
-        if len(comments_dict[topic_id]) < 3:  # Limit to 3 comments per topic
+        if len(comments_dict[topic_id]) < 3:
             comments_dict[topic_id].append((username, comment))
-    conn.close()
 
-    return render_template('home.html', topics=topics, comments=comments_dict)
+    # Get user's liked topics if logged in
+    user_liked_topic_ids = set()
+    if 'user_id' in session:
+        cursor.execute("SELECT topic_id FROM likes WHERE user_id = ?", (session['user_id'],))
+        user_liked_topic_ids = {row[0] for row in cursor.fetchall()}
+
+    conn.close()
+    return render_template('home.html', topics=topics, comments=comments_dict, user_liked_topic_ids=user_liked_topic_ids)
+
+@app.route('/like/<int:topic_id>', methods=['POST'])
+def like(topic_id):
+    if 'user_id' not in session:
+        return redirect("/login")
+
+    user_id = session['user_id']
+    conn = sqlite3.connect("forum.db")
+    c = conn.cursor()
+
+    # Check if the user already liked this topic
+    c.execute("SELECT 1 FROM likes WHERE user_id = ? AND topic_id = ?", (user_id, topic_id))
+    already_liked = c.fetchone()
+
+    if already_liked:
+        c.execute("DELETE FROM likes WHERE user_id = ? AND topic_id = ?", (user_id, topic_id))
+    else:
+        c.execute("INSERT INTO likes (user_id, topic_id) VALUES (?, ?)", (user_id, topic_id))
+
+    conn.commit()
+    conn.close()
+    # Check if request came from topic detail page
+    referer = request.referrer
+    if referer and '/topic/' in referer:
+        return redirect(referer)
+    else:
+        return redirect("/home")
+
 @app.route('/test')
 def test():
-    return "Flask is working" # Simple test route to check if Flask is running
+    return "Flask is working"
 
 @app.route('/topic/<int:topic_id>')
-def view_topic(topic_id):
+def topic_detail(topic_id):
+    if 'username' not in session:
+        return redirect('/login')
+    
     conn = sqlite3.connect('forum.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM topics WHERE id = ?", (topic_id,))
+    
+    # Get the topic details
+    cursor.execute('SELECT id, username, title, content FROM topics WHERE id = ?', (topic_id,))
     topic = cursor.fetchone()
-
-    cursor.execute("SELECT * FROM comments WHERE topic_id = ?", (topic_id,))
-    comments = cursor.fetchall()
-    conn.close()
-
-    if topic:
-        topic_id, username, title, content = topic
-        return render_template("topic_detail.html", title=title, username=username, content=content, comments=comments)
-    else:
+    
+    if not topic:
+        conn.close()
         return "Topic not found", 404
+    
+    # Get all comments for this topic
+    cursor.execute('SELECT * FROM comments WHERE topic_id = ? ORDER BY id', (topic_id,))
+    comments = cursor.fetchall()
+    
+    # Get like count for this topic
+    cursor.execute('SELECT COUNT(*) FROM likes WHERE topic_id = ?', (topic_id,))
+    like_count = cursor.fetchone()[0]
+    
+    # Check if current user has liked this topic
+    user_has_liked = False
+    if 'user_id' in session:
+        cursor.execute('SELECT 1 FROM likes WHERE user_id = ? AND topic_id = ?', 
+                      (session['user_id'], topic_id))
+        user_has_liked = cursor.fetchone() is not None
+    
+    conn.close()
+    
+    return render_template('topic_detail.html', 
+                         topic_id=topic[0],
+                         username=topic[1], 
+                         title=topic[2], 
+                         content=topic[3],
+                         comments=comments,
+                         like_count=like_count,
+                         user_has_liked=user_has_liked)
 
 @app.route('/comment/<int:topic_id>', methods=['POST'])
 def comment(topic_id):
@@ -132,7 +198,7 @@ def comment(topic_id):
     conn.commit()
     conn.close()
 
-    return redirect('/home')
+    return redirect('/topic/{}'.format(topic_id))
 
 @app.route('/')
 def landingPage():
@@ -161,11 +227,16 @@ def init_db():
                         comment TEXT,
                         FOREIGN KEY (topic_id) REFERENCES topics(id))''')
 
+    cursor.execute('''CREATE TABLE IF NOT EXISTS likes (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        topic_id INTEGER NOT NULL,
+                        UNIQUE(user_id, topic_id)
+                        )''')
+
     conn.commit()
     conn.close()
 
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
-
-

@@ -85,6 +85,15 @@
     .comment-form button:hover {
       background-color: #003b8c;
     }
+    .like-form {
+      margin: 10px 0;
+    }
+    .like-form button {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -103,6 +112,18 @@
       <p>{{ topic.truncated_content }}</p>
     </a>
     <p class="username">Posted by: {{ topic.username }}</p>
+
+    <div class="like-form">
+      <form method="POST" action="/like/{{ topic.id }}" style="display: inline;">
+        <button type="submit">
+          {% if topic.id in user_liked_topic_ids %}
+            ❤️ {{ topic.likes }}
+          {% else %}
+            🤍 {{ topic.likes }}
+          {% endif %}
+        </button>
+      </form>
+    </div>
 
     <div class="comments">
       <strong>Comments:</strong>
@@ -130,6 +151,3 @@
   </div>
 </body>
 </html>
-
-
-

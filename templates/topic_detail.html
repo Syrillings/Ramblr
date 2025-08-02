@@ -1,20 +1,58 @@
-<h2>{{ title }}</h2>
-<p><strong>Posted by:</strong> {{ username }}</p>
-<p>{{ content }}</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }} - Forum</title>
 
-<hr>
-<h4>Comments:</h4>
-{% for comment in comments %}
-  <div class="comment">
-    <strong>{{ comment[2] }}:</strong> {{ comment[3] }} 
-    <!-- this is to access 'username' and 'comment' which are at index 2 and 3 -->
+</head>
+<body>
+  <div class="container">
+    <h2>{{ title }}</h2>
+    <p class="author"><strong>Posted by:</strong> {{ username }}</p>
+    <div class="content">
+      <p>{{ content }}</p>
+    </div>
+
+    <!-- Like button section -->
+    <div class="like-section">
+      {% if session.get('user_id') %}
+        <form method="POST" action="/like/{{ topic_id }}" style="display: inline;">
+          <button type="submit" class="like-button">
+            {% if user_has_liked %}
+              ❤️ {{ like_count }}
+            {% else %}
+              🤍 {{ like_count }}
+            {% endif %}
+          </button>
+        </form>
+      {% else %}
+        <span class="like-display">🤍 {{ like_count }}</span>
+        <small><a href="/login">Login to like this post</a></small>
+      {% endif %}
+    </div>
+
+    <hr>
+    <h4>Comments:</h4>
+    {% if comments %}
+      {% for comment in comments %}
+        <div class="comment">
+          <strong>{{ comment[2] }}:</strong> {{ comment[3] }}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No comments yet. Be the first to comment!</p>
+    {% endif %}
+
+    <!-- Add a comment -->
+    <div class="comment-form">
+      <h4>Add a Comment:</h4>
+      <form action="/comment/{{ topic_id }}" method="POST">
+        <input type="text" name="comment" placeholder="Write a comment..." required>
+        <button type="submit">Post Comment</button>
+      </form>
+    </div>
+
+    <p><a href="/home" class="back-link">← Back to Home</a></p>
   </div>
-{% endfor %}
-
-<!-- Add a comment -->
-<form action="/comment/{{ request.path.split('/')[-1] }}" method="POST">
-  <input type="text" name="comment" placeholder="Write a comment..." required>
-  <button type="submit">Post Comment</button>
-</form>
-
-<p><a href="/home">← Back to Home</a></p>
+</body>
+</html>
