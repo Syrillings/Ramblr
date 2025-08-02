@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import sqlite3
+import bcrypt
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -9,11 +10,14 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        byte_password = password.encode('utf-8')
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(byte_password, salt)
         email = request.form['email']
 
         conn = sqlite3.connect('forum.db')
         cursor = conn.cursor()
-        cursor.execute('INSERT INTO users(username, password, email) VALUES(?,?,?)', (username, password, email))
+        cursor.execute('INSERT INTO users(username, password, email) VALUES(?,?,?)', (username, hashed_password, email))
         conn.commit()
         conn.close()
         return redirect('/login')
@@ -24,20 +28,28 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        byte_password = password.encode('utf-8')
 
         conn = sqlite3.connect('forum.db')
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', (username, password))
+        cursor.execute('SELECT id, password FROM users WHERE username = ?', (username,))
         user = cursor.fetchone()
         conn.close()
 
         if user:
-            session['username'] = username
-            session['user_id'] = user[0] 
-            return redirect('/home')
-        else:
-            return "Invalid username or password. Try again."
+            user_id = user[0]
+            stored_hashed_password = user[1]
+
+           
+            if bcrypt.checkpw(byte_password, stored_hashed_password):
+                session['username'] = username
+                session['user_id'] = user_id
+                return redirect('/home')
+        
+        return "Invalid username or password. Try again."
+
     return render_template('login.html')
+
 
 @app.route('/logout')
 def logout():
