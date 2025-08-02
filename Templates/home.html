@@ -9,8 +9,7 @@
     Hi, {{ name }}.
     {% for post in posts %}
     <div>
-        <h2><a href="/post_details/{{ post[0] }}">{{ post[0] }}</a></h2>
-        <p>{{ post[4] }}</p>
+        <h2><a href="/post_details/{{ post[0] }}">{{ post[1] }}</a></h2>
     </div>
    {% endfor %}
 </body>

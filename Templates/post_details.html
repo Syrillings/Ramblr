@@ -6,16 +6,14 @@
     <title>{{ post['title'] }}</title>
 </head>
 <body>
-<h1>Post #{{ post[0] }}</h1>
-<p>{{ post[4] }}</p>
+<h1>{{ post[1] }}</h1>
 <p>Author: {{ post[1] }}</p>
-<!-- Date not available -->
 <a href="/home">Back to Home</a>
 
 <h3>Comments</h3>
 {% for comment in comments %}
     <div>
-        <p><strong>{{ comment[2] }}:</strong> {{ comment[5] }}</p>
+        <p><strong>{{ comment[2] }}:</strong> {{ comment[3] }}</p>
     </div>
 {% endfor %}
 
