@@ -36,7 +36,7 @@ def login():
             session['user_id'] = user[0] 
             return redirect('/home')
         else:
-            return "Invalid username or password. Try again."
+            return render_template('error_boundary.html')
     return render_template('login.html')
 
 @app.route('/logout')
