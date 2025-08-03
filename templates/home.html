@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Home - Forum</title>
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -94,6 +97,13 @@
       cursor: pointer;
       font-size: 16px;
     }
+
+    .like-btn {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
@@ -113,15 +123,15 @@
     </a>
     <p class="username">Posted by: {{ topic.username }}</p>
 
-      <button onclick="toggleLike('{{ topic.id }}')" id="like-btn-{{ topic.id }}">
-        <span id="like-icon-{{ topic.id }}">
-          {% if topic.likes > 0%}
-            ❤️ {{ topic.likes }}
-          {% else %}
-            🤍
-          {% endif %}
-        </span>
-      </button>
+    <button class="like-btn" onclick="toggleLike('{{ topic.id }}')" id="like-btn-{{ topic.id }}">
+      <span id="like-icon-{{ topic.id }}">
+        {% if topic.id in user_liked_topic_ids %}
+          <ion-icon name="heart" class="heart" style="color: red;"></ion-icon> {{ topic.likes }}
+        {% else %}
+          <ion-icon class="heart" name="heart-outline"></ion-icon> {{ topic.likes }}
+        {% endif %}
+      </span>
+    </button>
 
     <div class="comments">
       <strong>Comments:</strong>
@@ -147,6 +157,7 @@
       <p>No more topics. Please check back later.</p>
     </div>
   </div>
+
 <script>
 function toggleLike(topicId) {
   fetch(`/like/${topicId}`, {
@@ -160,17 +171,17 @@ function toggleLike(topicId) {
     const icon = document.getElementById(`like-icon-${topicId}`);
     const likeCount = data.likes;
 
-    if (likeCount > 0) {
-      icon.textContent = data.liked ? `❤️ ${likeCount}` : `🤍 ${likeCount}`;
+    if (data.liked) {
+      // User just liked it - show red heart
+      icon.innerHTML = `<ion-icon name="heart" class="heart" style="color: red;"></ion-icon> ${likeCount}`;
     } else {
-      icon.textContent = `🤍`;
+      // User just unliked it - show outline heart
+      icon.innerHTML = `<ion-icon name="heart-outline" class="heart"></ion-icon> ${likeCount}`;
     }
   })
   .catch(err => console.error("Toggle like error:", err));
 }
 </script>
-
-
 
 </body>
 </html>

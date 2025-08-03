@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>{{ title }} - Forum</title>
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
 </head>
 <body>
@@ -16,17 +18,17 @@
     <!-- Like button section -->
     <div class="like-section">
       {% if session.get('user_id') %}
-        <form method="POST" action="/like/{{ topic_id }}" style="display: inline;">
-          <button type="submit" class="like-button">
+        <button onclick="toggleLike('{{ topic_id }}')" class="like-button" id="like-btn-{{ topic_id }}">
+          <span id="like-icon-{{ topic_id }}">
             {% if user_has_liked %}
-              ❤️ {{ like_count }}
+              <ion-icon name="heart" style="color: red;"></ion-icon> {{ like_count }}
             {% else %}
-              🤍 {{ like_count }}
+               <ion-icon name="heart-outline"></ion-icon> {{ like_count }}
             {% endif %}
-          </button>
-        </form>
+          </span>
+        </button>
       {% else %}
-        <span class="like-display">🤍 {{ like_count }}</span>
+        <span class="like-display"> <ion-icon name="heart-outline"></ion-icon> {{ like_count }}</span>
         <small><a href="/login">Login to like this post</a></small>
       {% endif %}
     </div>
@@ -54,5 +56,31 @@
 
     <p><a href="/home" class="back-link">← Back to Home</a></p>
   </div>
+
+<script>
+function toggleLike(topicId) {
+  fetch(`/like/${topicId}`, {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const icon = document.getElementById(`like-icon-${topicId}`);
+    const likeCount = data.likes;
+
+    if (data.liked) {
+      // User just liked it - show red heart
+      icon.innerHTML = `<ion-icon name="heart" style="color: red;"></ion-icon> ${likeCount}`;
+    } else {
+      // User just unliked it - show outline heart
+      icon.innerHTML = `<ion-icon name="heart-outline"></ion-icon> ${likeCount}`;
+    }
+  })
+  .catch(err => console.error("Toggle like error:", err));
+}
+</script>
+
 </body>
 </html>
