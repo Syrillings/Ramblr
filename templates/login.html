@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login - Ramblr</title>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <style>
     * {
       margin: 0;
@@ -88,6 +90,29 @@
       border-color: #1e3a8a;
     }
 
+    .password-container {
+      position: relative;
+    }
+
+    .password-container input {
+      padding-right: 45px; 
+    }
+
+    .eye-icon {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #666;
+      font-size: 20px;
+      transition: color 0.3s;
+    }
+
+    .eye-icon:hover {
+      color: #1e3a8a;
+    }
+
     .submit-btn {
       background-color: #1e3a8a;
       color: white;
@@ -162,7 +187,10 @@
 
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+        <div class="password-container">
+          <input type="password" id="password" name="password" placeholder="Enter your password" required>
+          <ion-icon name="eye-outline" class="eye-icon" id="togglePassword"></ion-icon>
+        </div>
       </div>
 
       <button type="submit" class="submit-btn">Login</button>
@@ -172,7 +200,22 @@
       <p>Don't have an account? <a href="/register">Register</a></p>
     </div>
   </div>
+
+  <script>
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+
+    togglePassword.addEventListener('click', function() {
+
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      
+      if (type === 'password') {
+        this.setAttribute('name', 'eye-outline');
+      } else {
+        this.setAttribute('name', 'eye-off-outline');
+      }
+    });
+  </script>
 </body>
 </html>
-
-

@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Register - Ramblr</title>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <style>
     * {
       margin: 0;
@@ -86,6 +88,29 @@
       outline: none;
       border-color: #5C3DFF;
     }
+      .password-container {
+      position: relative;
+    }
+
+    .password-container input {
+      padding-right: 45px; 
+    }
+
+    .eye-icon {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #666;
+      font-size: 20px;
+      transition: color 0.3s;
+    }
+
+    .eye-icon:hover {
+      color: #1e3a8a;
+    }
+
 
     .submit-btn {
       background-color: #1e3a8a;
@@ -157,7 +182,10 @@
 
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Create a strong password" required minlength="8" />
+        <div class="password-container">
+          <input type="password" id="password" name="password" placeholder="Enter your password" required>
+          <ion-icon name="eye-outline" class="eye-icon" id="togglePassword"></ion-icon>
+        </div>
       </div>
 
       <button type="submit" class="submit-btn">Register</button>
@@ -167,6 +195,23 @@
       <p>Already have an account? <a href="/login">Log in</a></p>
     </div>
   </div>
+    <script>
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+
+    togglePassword.addEventListener('click', function() {
+      // Toggle the type attribute
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      
+      // Toggle the eye icon
+      if (type === 'password') {
+        this.setAttribute('name', 'eye-outline');
+      } else {
+        this.setAttribute('name', 'eye-off-outline');
+      }
+    });
+  </script>
 </body>
 </html>
 
