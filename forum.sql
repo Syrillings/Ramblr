@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS likes;
+select * from users

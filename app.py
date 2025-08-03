@@ -37,17 +37,11 @@ def login():
         conn.close()
 
         if user:
-            user_id = user[0]
-            stored_hashed_password = user[1]
-
-           
-            if bcrypt.checkpw(byte_password, stored_hashed_password):
-                session['username'] = username
-                session['user_id'] = user_id
-                return redirect('/home')
-        
-        return "Invalid username or password. Try again."
-
+            session['username'] = username
+            session['user_id'] = user[0] 
+            return redirect('/home')
+        else:
+            return "Invalid username or password. Try again."
     return render_template('login.html')
 
 
