@@ -5,7 +5,123 @@
   <title>{{ title }} - Forum</title>
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  body {
+    background-color: #1e3a8a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container {
+    background-color: #fff;
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    width: 100%;
+  }
+  h2 {
+    font-size: 24px;
+    color: #1e3a8a;
+    margin-bottom: 10px;
+  }
+  .author {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 20px;
+  }
+  .content {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  .like-section {
+    margin-bottom: 20px;
+  }
+  .like-button {
+    background-color: #1e3a8a;
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .like-button:hover {
+    background-color: rgba(24, 60, 133, 1);
+  }
+  .like-display {
+    font-size: 14px;
+    color: #555;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 20px 0;
+  }
+  .comment {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+  }
+  .comment strong {
+    color: #1e3a8a;
+  }
+  .comment-form {
+    margin-top: 20px;
+  }
+  .comment-form h4 {
+    font-size: 18px;
+    color: #1e3a8a;
+    margin-bottom: 10px;
+  }
+  .comment-form input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+  .comment-form input:focus {
+    outline: none;
+    border-color: #5C3DFF;
+  }
+  .comment-form button {
+    background-color: #1e3a8a;
+    color: white;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .comment-form button:hover {
+    background-color: rgba(24, 60, 133, 1);
+  }
+  .back-link {
+    display: inline-block;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #3366cc;
+    text-decoration: none;
+  }
+  .back-link:hover {
+    text-decoration: underline;
+  }
+</style>
 </head>
 <body>
   <div class="container">
@@ -18,17 +134,17 @@
     <!-- Like button section -->
     <div class="like-section">
       {% if session.get('user_id') %}
-        <button onclick="toggleLike('{{ topic_id }}')" class="like-button" id="like-btn-{{ topic_id }}">
-          <span id="like-icon-{{ topic_id }}">
+        <form method="POST" action="/like/{{ topic_id }}" style="display: inline;">
+          <button type="submit" class="like-button">
             {% if user_has_liked %}
-              <ion-icon name="heart" style="color: red;"></ion-icon> {{ like_count }}
+              ❤️ {{ like_count }}
             {% else %}
-               <ion-icon name="heart-outline"></ion-icon> {{ like_count }}
+              🤍 {{ like_count }}
             {% endif %}
-          </span>
-        </button>
+          </button>
+        </form>
       {% else %}
-        <span class="like-display"> <ion-icon name="heart-outline"></ion-icon> {{ like_count }}</span>
+        <span class="like-display">🤍 {{ like_count }}</span>
         <small><a href="/login">Login to like this post</a></small>
       {% endif %}
     </div>
@@ -56,6 +172,7 @@
 
     <p><a href="/home" class="back-link">← Back to Home</a></p>
   </div>
+</body>
 
 <script>
 function toggleLike(topicId) {
