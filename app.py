@@ -37,14 +37,14 @@ def login():
         user = cursor.fetchone()
         conn.close()
 
-        if user:
+       #whoever wrote this didn't make it a tuple and verify the password against the hashed password
+        if user and bcrypt.checkpw(byte_password, user[1]):
             session['username'] = username
-            session['user_id'] = user[0] 
+            session['user_id'] = user[0]
             return redirect('/home')
         else:
-            return "Invalid username or password. Try again."
+            return render_template('error_boundary.html')
     return render_template('login.html')
-
 
 @app.route('/logout')
 def logout():
