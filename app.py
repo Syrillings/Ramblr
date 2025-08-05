@@ -84,7 +84,7 @@ def home():
     
     for topic in topics_raw:
         topic_id, username, title, content, like_count = topic
-        truncated_content = content[:100] + '...' if len(content) > 40 else content
+        truncated_content = content[:250] + '...' if len(content) > 40 else content
         liked_by_user = topic_id in user_liked_topic_ids
 
         topics.append({
