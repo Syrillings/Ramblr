@@ -1,10 +1,97 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import sqlite3
+from werkzeug.utils import secure_filename
 import bcrypt
 import os
 
+
+
+
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
+
+app.config['UPLOAD_FOLDER'] = os.path.join('static', 'img', 'profile_pics')
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 MB
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route("/profile")
+def profile():
+    if 'username' not in session:
+        return redirect('/login')
+    
+    conn = sqlite3.connect("forum.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = ?", (session['username'],))
+    user = cursor.fetchone()
+
+  
+    if user is None:
+        conn.close()
+        return redirect('/login')
+
+    user_dict = {
+        "username": user[1], #username column
+        "profile_pic": user[4] #profile_pic column
+    }
+
+
+    return render_template("profile.html", user=user_dict)
+
+
+#Uploading user profile picture
+@app.route('/upload_profile_pic', methods=['POST'])
+def upload_profile_pic():
+    try:
+        if 'username' not in session:
+            print("User not logged in.")
+            return redirect('/login')
+
+        print("Form Keys:", request.form.keys())
+        print("File Keys:", request.files.keys())
+
+        if 'profile_pic' not in request.files:
+            print("No file part in request")
+            return "No file part in request", 400
+
+        file = request.files['profile_pic']
+        print("Filename:", file.filename)
+
+        if file.filename == '':
+            print("Empty filename")
+            return "No file selected", 400
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            upload_folder = app.config['UPLOAD_FOLDER']
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+
+            relative_path = os.path.join('img', 'profile_pics', filename).replace("\\", "/")
+
+            conn = sqlite3.connect('forum.db')
+            cursor = conn.cursor()
+            cursor.execute('UPDATE users SET profile_pic = ? WHERE username = ?', (relative_path, session['username']))
+            conn.commit()
+            conn.close()
+
+            print("Upload successful. Redirecting to profile.")
+            return redirect('/profile')
+        else:
+            print("File type not allowed")
+            return "File type not allowed", 400
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Server error: {str(e)}", 500
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -230,7 +317,10 @@ def init_db():
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         username TEXT NOT NULL,
                         password TEXT NOT NULL,
-                        email TEXT NOT NULL)''')
+                        email TEXT NOT NULL,
+                        profile_pic TEXT)
+                        ''')
+        
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS topics (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
