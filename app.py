@@ -89,6 +89,61 @@ def home():
     user_liked_topic_ids = set()
     topics = []
     
+    
+    for topic in topics_raw:
+        topic_id, username, title, content, like_count = topic
+        truncated_content = content[:250] + '...' if len(content) > 40 else content
+        liked_by_user = topic_id in user_liked_topic_ids
+
+        topics.append({
+            'id': topic_id,
+            'username': username,
+            'title': title,
+            'truncated_content': truncated_content,
+            'full_content': content,
+            'likes': like_count,
+            'liked_by_user': liked_by_user
+        })
+
+    # Get limited comments per topic
+    cursor.execute("SELECT topic_id, username, comment FROM comments")
+    all_comments = cursor.fetchall()
+    comments_dict = {}
+    for topic_id, username, comment in all_comments:
+        if topic_id not in comments_dict:
+            comments_dict[topic_id] = []
+        if len(comments_dict[topic_id]) < 3:
+            comments_dict[topic_id].append((username, comment))
+
+    # Get user's liked topics if logged in
+    
+    if 'user_id' in session:
+        cursor.execute("SELECT topic_id FROM likes WHERE user_id = ?", (session['user_id'],))
+        user_liked_topic_ids = {row[0] for row in cursor.fetchall()}
+    username = session['username']
+    conn.close()
+    return render_template('home.html', topics=topics, comments=comments_dict, user_liked_topic_ids=user_liked_topic_ids, username=username)
+
+
+@app.route('/myposts', methods=['GET'])
+def getuserposts():
+    conn = sqlite3.connect('forum.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT topics.id, topics.username, topics.title, topics.content,
+            COUNT(likes.id) AS like_count
+        FROM topics
+        LEFT JOIN likes ON topics.id = likes.topic_id
+        WHERE topics.username = ?
+        GROUP BY topics.id
+        ORDER BY topics.id DESC
+    ''', (session['username'],))
+
+    topics_raw = cursor.fetchall()
+    user_liked_topic_ids = set()
+    topics = []
+    
     for topic in topics_raw:
         topic_id, username, title, content, like_count = topic
         truncated_content = content[:250] + '...' if len(content) > 40 else content
@@ -121,8 +176,7 @@ def home():
         user_liked_topic_ids = {row[0] for row in cursor.fetchall()}
 
     conn.close()
-    return render_template('home.html', topics=topics, comments=comments_dict, user_liked_topic_ids=user_liked_topic_ids)
-
+    return render_template('userposts.html', topics=topics, comments=comments_dict, user_liked_topic_ids=user_liked_topic_ids)
 
 
 @app.route('/like/<int:topic_id>', methods=['POST'])
@@ -217,6 +271,73 @@ def comment(topic_id):
     conn.close()
 
     return redirect('/topic/{}'.format(topic_id))
+
+@app.route('/delete/<int:topic_id>', methods=['POST'])
+def delete_post(topic_id):
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    username = session['username']
+    conn = sqlite3.connect('forum.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT username FROM topics WHERE id = ?', (topic_id,))
+    topic = cursor.fetchone()
+    
+    if not topic:
+        conn.close()
+        return jsonify({'error': 'Post not found'}), 404
+    
+    if topic[0] != username:
+        conn.close()
+        return jsonify({'error': 'Unauthorized'}), 403
+    cursor.execute('DELETE FROM comments WHERE topic_id = ?', (topic_id,))
+    cursor.execute('DELETE FROM likes WHERE topic_id = ?', (topic_id,))
+    cursor.execute('DELETE FROM topics WHERE id = ?', (topic_id,))
+    
+    conn.commit()
+    conn.close()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True})
+    return redirect('/myposts')
+
+@app.route('/edit/<int:topic_id>', methods=['GET', 'POST'])
+def edit_post(topic_id):
+    if 'username' not in session:
+        return redirect('/login')
+
+    username = session['username']
+    conn = sqlite3.connect('forum.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT username, title, content FROM topics WHERE id = ?', (topic_id,))
+    topic = cursor.fetchone()
+    
+    if not topic:
+        conn.close()
+        return "Post not found", 404
+    
+    if topic[0] != username:
+        conn.close()
+        return "Unauthorized", 403
+
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        cursor.execute('UPDATE topics SET title = ?, content = ? WHERE id = ?', 
+                      (title, content, topic_id))
+        conn.commit()
+        conn.close()
+        
+        return redirect('/myposts')
+
+    conn.close()
+    return render_template('edit_post.html', 
+                         topic_id=topic_id,
+                         title=topic[1], 
+                         content=topic[2])
+
+
 
 @app.route('/')
 def landingPage():

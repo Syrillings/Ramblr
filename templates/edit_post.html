@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Post - Forum</title>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #e9efff;
+      margin: 0;
+      padding: 0;
+      font-size: 18px;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    h2 {
+      text-align: center;
+      color: #004aad;
+      margin-bottom: 30px;
+      font-size: 2em;
+    }
+    .form-container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+      border-left: 4px solid #004aad;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #004aad;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: #004aad;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 200px;
+    }
+    .button-group {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 25px;
+    }
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    .btn-primary {
+      background-color: #004aad;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #003b8c;
+      transform: translateY(-2px);
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover {
+      background-color: #545b62;
+      transform: translateY(-2px);
+    }
+    .top-nav {
+      background-color: #0b1257;
+      color: white;
+      padding: 15px 5%;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 70px;
+    }
+    .top-nav img {
+      width: 40px;
+      height: auto;
+    }
+    .top-nav span {
+      font-weight: 700;
+      font-size: large;
+      white-space: nowrap;
+    }
+    .hamburger {
+      width: 44px;
+      height: 44px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+    }
+    .hamburger-line {
+      width: 24px;
+      height: 2px;
+      background: white;
+      transition: all 0.3s ease;
+    }
+    .nav-menu {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 300px;
+      height: 100vh;
+      background: #0b1257;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+      transition: right 0.3s ease;
+      z-index: 1499;
+      padding: 80px 20px 20px;
+    }
+    .nav-menu ul {
+      list-style: none;
+      padding: 0;
+    }
+    .nav-menu li {
+      margin-bottom: 15px;
+    }
+    .nav-menu a {
+      text-decoration: none;
+      color: white;
+      font-size: 18px;
+    }
+    .nav-menu.active {
+      right: 0;
+    }
+    .hamburger.active .hamburger-line:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+    .hamburger.active .hamburger-line:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.active .hamburger-line:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 1498;
+    }
+    .overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    @media (max-width: 600px) {
+      .button-group {
+        flex-direction: column;
+      }
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <img src="{{ url_for('static', filename='img/Rumblr-logo.png') }}" alt="ramblr" style="width: 40px;">
+    <span style="font-weight: 700; font-size: large;">Welcome, {{ session['username'] }}</span>
+    <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+    <nav class="nav-menu">
+      <ul>
+        <li><a href="/home">Home</a></li>
+        <li><a href="/post">Post a Topic</a></li>
+        <li><a href="/logout">Logout</a></li>
+        <li><a href="/myposts">My Posts</a></li>
+      </ul>
+    </nav>
+    <div class="overlay"></div>
+  </div>
+
+  <div class="container">
+    <h2>Edit Post</h2>
+    
+    <div class="form-container">
+      <form method="POST">
+        <div class="form-group">
+          <label for="title">Title:</label>
+          <input type="text" id="title" name="title" value="{{ title }}" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="content">Content:</label>
+          <textarea id="content" name="content" required>{{ content }}</textarea>
+        </div>
+        
+        <div class="button-group">
+          <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+          <a href="/myposts" class="btn btn-secondary">❌ Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const hamburger = document.querySelector('.hamburger');
+    const navMenu = document.querySelector('.nav-menu');
+    const overlay = document.querySelector('.overlay');
+    
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      navMenu.classList.toggle('active');
+      overlay.classList.toggle('active');
+      
+      const isExpanded = hamburger.getAttribute('aria-expanded') === 'true';
+      hamburger.setAttribute('aria-expanded', !isExpanded);
+    });
+
+    overlay.addEventListener('click', () => {
+      hamburger.classList.remove('active');
+      navMenu.classList.remove('active');
+      overlay.classList.remove('active');
+      hamburger.setAttribute('aria-expanded', 'false');
+    });
+  </script>
+</body>
+</html>

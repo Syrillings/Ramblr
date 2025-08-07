@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home - Forum</title>
+  <title>My Posts - Forum</title>
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
@@ -272,7 +272,6 @@
       cursor: pointer;
       font-size: 16px;
     }
-
     .threedots-menu {
       background-color: transparent;
       color: black;
@@ -444,7 +443,7 @@
     <div class="overlay"></div>
 </div>
   <div class="container">
-    <h2>Forum Topics</h2>
+    <h2>Your Posts</h2>
 
     {% for topic in topics %}
       <div class="post">
@@ -455,7 +454,6 @@
           </span>
           <a href="/topic/{{ topic.id }}" class="read-more">Read more</a>
         </p>
-        <p class="username">Posted by: {{ topic.username }}</p>
 
         <div style="display: flex; align-items: center; justify-content: space-between; margin: 10px 0;">
           <button onclick="toggleLike('{{ topic.id }}')" id="like-btn-{{ topic.id }}" class="like-btn">
@@ -467,7 +465,6 @@
               {% endif %}
             </span>
           </button>
-          {% if topic.username == username %}
           <div class="menu-container">
             <button class="threedots-menu" onclick="toggleMenu(event, '{{ topic.id }}')"> ⋮ </button>
             <div class="popup-menu" id="menu-{{ topic.id }}">
@@ -483,10 +480,7 @@
               </ul>
             </div>
           </div>
-          {% endif %}
         </div>
-
-        
 
         <div class="comments">
           <strong>Comments:</strong>
@@ -511,7 +505,7 @@
     {% endfor %}
 
     <div class="post">
-      <p>No more topics. Please check back later.</p>
+      <p>No more posts to show.</p>
     </div>
     <div class="bottom-nav">
       <a href="/post" class="nav-post-topic">Post a Topic</a>
@@ -588,7 +582,6 @@
         menu.classList.remove('show');
       });
     });
-
 
     function toggleLike(topicId) {
       fetch(`/like/${topicId}`, {
