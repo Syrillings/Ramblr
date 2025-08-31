@@ -370,6 +370,7 @@
 
 /* Bottom navigation */
 .bottom-nav {
+
   display: flex;
   justify-content: center;
   gap: 20px;
@@ -463,15 +464,22 @@ body {
     font-size: 1.3em;
   }
 
-  .bottom-nav {
-    flex-direction: column;
-    gap: 15px;
-  }
+.bottom-nav {
+        flex-direction: column;
+        padding: 15px;
+        gap: 20px;
+        border-radius: 0%;
+      }
 
-  .bottom-nav a {
-    font-size: 1em;
-    padding: 10px 0;
-  }
+.bottom-nav a {
+        font-size: 1em;
+        margin-left: 10px;
+        margin-right: 10px;
+        padding: 10px 0;
+        text-align: center;
+        border-radius: none;
+
+      }
 }
 
 @media (max-width: 400px) {
