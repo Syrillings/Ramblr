@@ -15,7 +15,7 @@ app.secret_key = 'your_secret_key'
 
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'img', 'profile_pics')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 MB
-
+DEFAULT_AVATAR = "img/profile_pics/default.jpg"
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -24,25 +24,81 @@ def allowed_file(filename):
 def profile():
     if 'username' not in session:
         return redirect('/login')
-    
+
     conn = sqlite3.connect("forum.db")
     cursor = conn.cursor()
+
+    # Get user info
     cursor.execute("SELECT * FROM users WHERE username = ?", (session['username'],))
     user = cursor.fetchone()
-
-  
     if user is None:
         conn.close()
         return redirect('/login')
-
+    raw_pic = user[4]  # profile_pic column
+    display_pic = raw_pic if raw_pic else "img/profile_pics/default.jpg"
     user_dict = {
-        "username": user[1], #username column
-        "profile_pic": user[4] #profile_pic column
+        "username": user[1],   # username column
+        "profile_pic": display_pic # profile_pic column
     }
 
+    # Get user posts
+    cursor.execute('''
+        SELECT topics.id, topics.username, topics.title, topics.content,
+               COUNT(likes.id) AS like_count,
+               users.profile_pic
+        FROM topics
+        LEFT JOIN likes ON topics.id = likes.topic_id
+        LEFT JOIN users ON topics.username = users.username
+        WHERE topics.username = ?
+        GROUP BY topics.id
+        ORDER BY topics.id DESC
+    ''', (session['username'],))
+    
+    topics_raw = cursor.fetchall()
+    topics = []
 
-    return render_template("profile.html", user=user_dict)
+    for topic_id, username, title, content, like_count, profile_pic in topics_raw:
+        truncated_content = content[:250] + '...' if len(content) > 40 else content
+        #fallback to default if empty
+        profile_pic = profile_pic if profile_pic else "img/profile_pics/default.jpg"
+    
+        
+        topics.append({
+            'id': topic_id,
+            'username': username,
+            'title': title,
+            'truncated_content': truncated_content,
+            'full_content': content,
+            'likes': like_count,
+            'profile_pic': profile_pic
+        })
 
+    # Get limited comments per topic
+    cursor.execute("SELECT topic_id, username, comment FROM comments")
+    all_comments = cursor.fetchall()
+    comments_dict = {}
+    for topic_id, username, comment in all_comments:
+        if topic_id not in comments_dict:
+            comments_dict[topic_id] = []
+        if len(comments_dict[topic_id]) < 3:
+            comments_dict[topic_id].append((username, comment))
+
+    # Get user's liked topics
+    user_liked_topic_ids = set()
+    if 'user_id' in session:
+        cursor.execute("SELECT topic_id FROM likes WHERE user_id = ?", (session['user_id'],))
+        user_liked_topic_ids = {row[0] for row in cursor.fetchall()}
+
+    conn.close()
+
+    # Render profile with posts + comments
+    return render_template(
+        "profile.html",
+        user=user_dict,
+        topics=topics,
+        comments=comments_dict,
+        user_liked_topic_ids=user_liked_topic_ids
+    )
 
 #Uploading user profile picture
 @app.route('/upload_profile_pic', methods=['POST'])
@@ -105,7 +161,7 @@ def register():
 
         conn = sqlite3.connect('forum.db')
         cursor = conn.cursor()
-        cursor.execute('INSERT INTO users(username, password, email) VALUES(?,?,?)', (username, hashed_password, email))
+        cursor.execute('INSERT INTO users(username, password, email, profile_pic) VALUES(?,?,?,?)', (username, hashed_password, email, DEFAULT_AVATAR))
         conn.commit()
         conn.close()
         return redirect('/login')
@@ -166,12 +222,70 @@ def home():
     # Get topics with like counts
     cursor.execute('''
         SELECT topics.id, topics.username, topics.title, topics.content,
-               COUNT(likes.id) AS like_count
+               COUNT(likes.id) AS like_count,
+               users.profile_pic
         FROM topics
         LEFT JOIN likes ON topics.id = likes.topic_id
+        LEFT JOIN users ON topics.username = users.username
         GROUP BY topics.id
         ORDER BY topics.id DESC
     ''')
+    topics_raw = cursor.fetchall()
+    user_liked_topic_ids = set()
+    topics = []
+    
+    
+    for topic in topics_raw:
+        topic_id, username, title, content, like_count, profile_pic = topic
+        truncated_content = content[:250] + '...' if len(content) > 40 else content
+        liked_by_user = topic_id in user_liked_topic_ids
+        profile_pic = profile_pic if profile_pic else "img/profile_pics/default.jpg"
+        topics.append({
+            'id': topic_id,
+            'username': username,
+            'title': title,
+            'truncated_content': truncated_content,
+            'full_content': content,
+            'likes': like_count,
+            'liked_by_user': liked_by_user,
+            'profile_pic': profile_pic
+        })
+
+    # Get limited comments per topic
+    cursor.execute("SELECT topic_id, username, comment FROM comments")
+    all_comments = cursor.fetchall()
+    comments_dict = {}
+    for topic_id, username, comment in all_comments:
+        if topic_id not in comments_dict:
+            comments_dict[topic_id] = []
+        if len(comments_dict[topic_id]) < 3:
+            comments_dict[topic_id].append((username, comment))
+
+    # Get user's liked topics if logged in
+    
+    if 'user_id' in session:
+        cursor.execute("SELECT topic_id FROM likes WHERE user_id = ?", (session['user_id'],))
+        user_liked_topic_ids = {row[0] for row in cursor.fetchall()}
+    username = session['username']
+    conn.close()
+    return render_template('home.html', topics=topics, comments=comments_dict, user_liked_topic_ids=user_liked_topic_ids, username=username)
+
+
+@app.route('/myposts', methods=['GET'])
+def getuserposts():
+    conn = sqlite3.connect('forum.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT topics.id, topics.username, topics.title, topics.content,
+            COUNT(likes.id) AS like_count
+        FROM topics
+        LEFT JOIN likes ON topics.id = likes.topic_id
+        WHERE topics.username = ?
+        GROUP BY topics.id
+        ORDER BY topics.id DESC
+    ''', (session['username'],))
+
     topics_raw = cursor.fetchall()
     user_liked_topic_ids = set()
     topics = []
@@ -208,8 +322,7 @@ def home():
         user_liked_topic_ids = {row[0] for row in cursor.fetchall()}
 
     conn.close()
-    return render_template('home.html', topics=topics, comments=comments_dict, user_liked_topic_ids=user_liked_topic_ids)
-
+    return render_template('userposts.html', topics=topics, comments=comments_dict, user_liked_topic_ids=user_liked_topic_ids)
 
 
 @app.route('/like/<int:topic_id>', methods=['POST'])
@@ -305,6 +418,73 @@ def comment(topic_id):
 
     return redirect('/topic/{}'.format(topic_id))
 
+@app.route('/delete/<int:topic_id>', methods=['POST'])
+def delete_post(topic_id):
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    username = session['username']
+    conn = sqlite3.connect('forum.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT username FROM topics WHERE id = ?', (topic_id,))
+    topic = cursor.fetchone()
+    
+    if not topic:
+        conn.close()
+        return jsonify({'error': 'Post not found'}), 404
+    
+    if topic[0] != username:
+        conn.close()
+        return jsonify({'error': 'Unauthorized'}), 403
+    cursor.execute('DELETE FROM comments WHERE topic_id = ?', (topic_id,))
+    cursor.execute('DELETE FROM likes WHERE topic_id = ?', (topic_id,))
+    cursor.execute('DELETE FROM topics WHERE id = ?', (topic_id,))
+    
+    conn.commit()
+    conn.close()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True})
+    return redirect('/myposts')
+
+@app.route('/edit/<int:topic_id>', methods=['GET', 'POST'])
+def edit_post(topic_id):
+    if 'username' not in session:
+        return redirect('/login')
+
+    username = session['username']
+    conn = sqlite3.connect('forum.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT username, title, content FROM topics WHERE id = ?', (topic_id,))
+    topic = cursor.fetchone()
+    
+    if not topic:
+        conn.close()
+        return "Post not found", 404
+    
+    if topic[0] != username:
+        conn.close()
+        return "Unauthorized", 403
+
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        cursor.execute('UPDATE topics SET title = ?, content = ? WHERE id = ?', 
+                      (title, content, topic_id))
+        conn.commit()
+        conn.close()
+        
+        return redirect('/myposts')
+
+    conn.close()
+    return render_template('edit_post.html', 
+                         topic_id=topic_id,
+                         title=topic[1], 
+                         content=topic[2])
+
+
+
 @app.route('/')
 def landingPage():
     return render_template('landingPage.html')
@@ -327,6 +507,8 @@ def init_db():
                         username TEXT,
                         title TEXT,
                         content TEXT)''')
+
+        
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS comments (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
