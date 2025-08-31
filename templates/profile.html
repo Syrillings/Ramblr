@@ -244,6 +244,8 @@
 
 .popup-menu.show {
   opacity: 1;
+  position: absolute;
+  right: 0;
   visibility: visible;
   transform: translateY(0);
 }
@@ -414,7 +416,6 @@ body, input, button, select, textarea {
   display: flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 4px 12px rgba(0, 74, 173, 0.4);
   transition: background-color 0.3s ease;
   z-index: 2000;
   text-decoration: none;
@@ -533,7 +534,7 @@ body {
           {% endif %}
         </span>
       </button>
-      <div class="menu-container">
+      <div class="menu-container" style = "position: relative;" >
         <button class="threedots-menu" onclick="toggleMenu(event, '{{ topic.id }}')" aria-haspopup="true" aria-expanded="false" aria-label="Post options">⋮</button>
         <div class="popup-menu" id="menu-{{ topic.id }}" role="menu" aria-hidden="true">
           <ul>

@@ -475,7 +475,7 @@ def edit_post(topic_id):
         conn.commit()
         conn.close()
         
-        return redirect('/myposts')
+        return redirect('/home')
 
     conn.close()
     return render_template('edit_post.html', 
