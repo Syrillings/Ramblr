@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Users</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f6ff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e3a8a; /* Dark blue */
+        }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #d1d5db;
+            text-align: center;
+        }
+
+        th {
+            background: #2563eb; /* Blue */
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background: #e0f2fe; 
+        }
+
+        tr:hover {
+            background: #bfdbfe; 
+            transition: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <h1>Registered Users</h1>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Admin</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ "Yes" if user.is_admin else "No" }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
