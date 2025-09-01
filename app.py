@@ -101,7 +101,7 @@ def profile():
     )
 
 #Uploading user profile picture
-@app.route('/upload_profile_pic', methods=['POST'])
+@app.route('/upload_profile_pic', methods=['GET', 'POST'])
 def upload_profile_pic():
     try:
         if 'username' not in session:
@@ -116,6 +116,7 @@ def upload_profile_pic():
             return "No file part in request", 400
 
         file = request.files['profile_pic']
+        
         print("Filename:", file.filename)
 
         if file.filename == '':
@@ -139,7 +140,7 @@ def upload_profile_pic():
             conn.close()
 
             print("Upload successful. Redirecting to profile.")
-            return redirect('/profile')
+            return redirect('/profile', file_name=file.fiilename)
         else:
             print("File type not allowed")
             return "File type not allowed", 400
