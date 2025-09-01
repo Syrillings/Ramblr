@@ -497,6 +497,7 @@
 </head>
 <body>
   <div class="top-nav">
+<<<<<<< HEAD
     <img src="{{ url_for('static', filename='img/Rumblr-logo.png') }}" alt="ramblr" />
     <span>Welcome, {{ session['username'] }}</span>
     <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
@@ -513,6 +514,18 @@
       </ul>
     </nav>
     <div class="overlay"></div>
+=======
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <img src="{{ url_for('static', filename='img/Rumblr-logo.png') }}" alt="ramblr" style="width: 40px;">
+      <a href="/profile/{{ session['username'] }}" style="text-decoration: none; color: white; font-weight: 600;">
+      Hi, {{ session['username'] }}
+      </a>
+    </div>
+    <div>
+      <a href="/post" class="nav-post-topic">New Post</a>
+      <a href="/logout" class="nav-logout">Logout</a>
+    </div>
+>>>>>>> 3385d1a4a10b35e119367763568324124482c41b
   </div>
 
   <div class="container">

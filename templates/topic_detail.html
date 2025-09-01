@@ -94,7 +94,7 @@
 <body>
   <div class="container">
     <h2>{{ title }}</h2>
-    <p class="author"><strong>Posted by:</strong> {{ username }}</p>
+    <p class="author"><strong>Posted by:</strong> <a href="/profile/{{ username }}" style="color: #004aad; text-decoration: none;">{{ username }}</a></p>
     <div class="content">
       <p>{{ content }}</p>
     </div>
@@ -122,7 +122,7 @@
     {% if comments %}
       {% for comment in comments %}
         <div class="comment">
-          <strong>{{ comment[2] }}:</strong> {{ comment[3] }}
+          <strong><a href="/profile/{{ comment[2] }}" style="color: #004aad; text-decoration: none;">{{ comment[2] }}</a>:</strong> {{ comment[3] }}
         </div>
       {% endfor %}
     {% else %}

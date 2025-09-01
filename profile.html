@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<<<<<<< HEAD
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
-      <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <title>{{ user.username }}'s Profile - Ramblr</title>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <style>
 /* Profile header */
 .profile-header {
@@ -494,7 +493,76 @@ body {
   }
 }
 
-      </style>
+.stats-container {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-number {
+  font-size: 1.5em;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 1em;
+  color: #666;
+}
+
+.activity-section {
+  margin-bottom: 30px;
+}
+
+.activity-item {
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-title {
+  font-size: 1.2em;
+  font-weight: 700;
+  margin-bottom: 5px;
+  text-decoration: none;
+  color: #004aad;
+}
+
+.activity-meta {
+  font-size: 1em;
+  color: #666;
+}
+
+.comment-preview {
+  margin-bottom: 10px;
+}
+
+.comment-on {
+  font-size: 1em;
+  color: #666;
+}
+
+.comment-topic {
+  font-size: 1em;
+  font-weight: 700;
+  text-decoration: none;
+  color: #004aad;
+}
+
+.comment-content {
+  font-size: 1em;
+  color: #444;
+}
+    </style>
 </head>
 <body>
     
@@ -504,12 +572,26 @@ body {
 
 <div class="profile-header">
   {% if user.profile_pic %}
-  <img class="profile-picture" src="/static/{{ user.profile_pic }}" alt="Profile Picture">
+  <img class="profile-picture" src="{{ url_for('static', filename=user.profile_pic) }}" alt="Profile Picture">
   
   {% else %}
-  <div class="no-profile-pic">No profile picture uploaded.</div>
+  <div class="no-profile-pic">No profile picture</div>
   {% endif %}
   <h2>{{ user.username }}'s Profile</h2>
+  <div class="stats-container">
+    <div class="stat-item">
+      <span class="stat-number">{{ user_stats.topic_count }}</span>
+      <span class="stat-label">Topics</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">{{ user_stats.comment_count }}</span>
+      <span class="stat-label">Comments</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">{{ user_stats.likes_received }}</span>
+      <span class="stat-label">Likes</span>
+    </div>
+  </div>
   <form action="/upload_profile_pic" method="POST" enctype="multipart/form-data" class="upload-form">
     <label for="profile_pic" class="upload-label">
       <ion-icon name="pencil-outline"></ion-icon> Change Picture
@@ -526,70 +608,57 @@ body {
 <div class="divider"></div>
 
 <div class="container">
-  <h2>My Posts</h2>
-  {% for topic in topics %}
-  <div class="post">
-    <div class="post-header">
-      <img src="{{ url_for('static', filename=topic.profile_pic) }}" alt="{{ topic.username }}'s profile picture" class="post-profile-pic">
-      <strong class="post-username">{{ topic.username }}</strong>
-    </div>
-    <h3>{{ topic.title }}</h3>
-    <p class="topic-preview">
-      {{ topic.truncated_content[:-3] }}
-      <a href="/topic/{{ topic.id }}" class="read-more">Read more</a>
-    </p>
-    <div class="post-actions">
-      <button onclick="toggleLike('{{ topic.id }}')" id="like-btn-{{ topic.id }}" class="like-btn" aria-label="Like post">
-        <span id="like-icon-{{ topic.id }}" class="like-icon">
-          {% if topic.likes > 0 %}
-          ❤️ {{ topic.likes }}
-          {% else %}
-          🤍
-          {% endif %}
-        </span>
-      </button>
-      <div class="menu-container" style = "position: relative;" >
-        <button class="threedots-menu" onclick="toggleMenu(event, '{{ topic.id }}')" aria-haspopup="true" aria-expanded="false" aria-label="Post options">⋮</button>
-        <div class="popup-menu" id="menu-{{ topic.id }}" role="menu" aria-hidden="true">
-          <ul>
-            <li role="menuitem" onclick="editPost('{{ topic.id }}')">
-              <ion-icon name="create-outline"></ion-icon> Edit
-            </li>
-            <li role="menuitem">
-              <a href="#" onclick="deletePost('{{ topic.id }}')">
-                <ion-icon name="trash-outline"></ion-icon> Delete
-              </a>
-            </li>
-          </ul>
+  <h2>Recent Activity</h2>
+  
+  <div class="activity-section">
+    <h3>Recent Topics</h3>
+    {% if user_activity.topics %}
+        {% for topic in user_activity.topics %}
+        <div class="activity-item">
+          <a href="{{ url_for('topic_detail', topic_id=topic.id) }}" class="activity-title">
+            {{ topic.title }}
+          </a>
+          <div class="activity-meta">
+            <span>{{ topic.created_at }}</span>
+            <span>•</span>
+            <span>💬 {{ topic.comment_count }} comments</span>
+            <span>•</span>
+            <span>❤️ {{ topic.likes }} likes</span>
+          </div>
         </div>
-      </div>
-    </div>
-    <div class="comments">
-      <strong>Comments:</strong>
-      {% for comment in comments.get(topic.id, []) %}
-      <div class="comment">
-        <strong>{{ comment[0] }}:</strong> {{ comment[1] }}
-      </div>
-      {% endfor %}
-      {% if comments.get(topic.id, [])|length >= 3 %}
-      <div class="see-all-comments">
-        <a href="/topic/{{ topic.id }}" class="view-comments-btn">See all comments →</a>
-      </div>
-      {% endif %}
-      <form class="comment-form" action="/comment/{{ topic.id }}" method="POST">
-        <input type="text" name="comment" placeholder="Write a comment..." required>
-        <button type="submit">Post</button>
-      </form>
-    </div>
+        {% endfor %}
+    {% else %}
+        <p class="no-activity">No topics yet.</p>
+    {% endif %}
   </div>
-  {% endfor %}
-  <div class="post no-posts">
-    <p>No more posts to show.</p>
+
+  <div class="activity-section">
+    <h3>Recent Comments</h3>
+    {% if user_activity.comments %}
+        {% for comment in user_activity.comments %}
+        <div class="activity-item">
+          <div class="comment-preview">
+            <span class="comment-on">On </span>
+            <a href="{{ url_for('topic_detail', topic_id=comment.topic_id) }}" class="comment-topic">
+              {{ comment.topic_title }}
+            </a>
+            <p class="comment-content">{{ comment.content }}</p>
+          </div>
+          <div class="activity-meta">
+            <span>{{ comment.created_at }}</span>
+          </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="no-activity">No comments yet.</p>
+    {% endif %}
   </div>
-  <div class="bottom-nav">
-    <a href="/post" class="nav-post-topic">Post a Topic</a>
-    <a href="/logout" class="nav-logout">Logout</a>
-  </div>
+</div>
+
+<div class="bottom-nav">
+  <a href="/home" class="nav-home">Home</a>
+  <a href="/post" class="nav-post">New Post</a>
+  <a href="/logout" class="nav-logout">Logout</a>
 </div>
 
   <script>
@@ -698,187 +767,3 @@ body {
 
 </body>
 </html>
-=======
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ user_profile.username }}'s Profile - Ramblr</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #e9efff;
-      margin: 0;
-      padding: 0;
-      color: #333;
-    }
-    .container {
-      max-width: 800px;
-      margin: 20px auto;
-      padding: 20px;
-    }
-    .profile-header {
-      background-color: #0b1257;
-      color: white;
-      padding: 30px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .profile-avatar {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      background-color: #004aad;
-      margin: 0 auto 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 40px;
-      color: white;
-    }
-    .profile-username {
-      font-size: 28px;
-      margin: 10px 0 5px;
-    }
-    .profile-email {
-      color: #d0d0d0;
-      margin-bottom: 15px;
-    }
-    .profile-stats {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      margin: 20px 0;
-    }
-    .stat-box {
-      text-align: center;
-    }
-    .stat-number {
-      font-size: 24px;
-      font-weight: bold;
-      color: #004aad;
-    }
-    .stat-label {
-      font-size: 14px;
-      color: #888;
-    }
-    .activity-section {
-      background-color: white;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .section-title {
-      color: #004aad;
-      border-bottom: 2px solid #e0e0e0;
-      padding-bottom: 10px;
-      margin-top: 0;
-    }
-    .topic-list {
-      list-style: none;
-      padding: 0;
-    }
-    .topic-item {
-      padding: 15px;
-      border-bottom: 1px solid #eee;
-      transition: background-color 0.2s;
-    }
-    .topic-item:hover {
-      background-color: #f8f9ff;
-    }
-    .topic-title {
-      font-weight: 600;
-      color: #004aad;
-      text-decoration: none;
-      display: block;
-      margin-bottom: 5px;
-    }
-    .topic-meta {
-      font-size: 13px;
-      color: #777;
-    }
-    .no-activity {
-      color: #777;
-      text-align: center;
-      padding: 20px;
-      font-style: italic;
-    }
-    .back-link {
-      display: inline-block;
-      margin-bottom: 20px;
-      color: #004aad;
-      text-decoration: none;
-    }
-    .back-link:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <a href="/home" class="back-link">← Back to Home</a>
-    
-    <div class="profile-header">
-      <div class="profile-avatar">
-        {{ user_profile.username[0].upper() }}
-      </div>
-      <h1 class="profile-username">{{ user_profile.username }}</h1>
-      <p class="profile-email">{{ user_profile.email }}</p>
-      
-      <div class="profile-stats">
-        <div class="stat-box">
-          <div class="stat-number">{{ user_stats.topic_count }}</div>
-          <div class="stat-label">Topics</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-number">{{ user_stats.comment_count }}</div>
-          <div class="stat-label">Comments</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-number">{{ user_stats.likes_received }}</div>
-          <div class="stat-label">Likes Received</div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="activity-section">
-      <h2 class="section-title">Recent Activity</h2>
-      
-      <h3>Latest Topics</h3>
-      {% if user_activity.topics %}
-        <ul class="topic-list">
-          {% for topic in user_activity.topics %}
-            <li class="topic-item">
-              <a href="/topic/{{ topic.id }}" class="topic-title">{{ topic.title }}</a>
-              <div class="topic-meta">
-                {{ topic.created_at }} • {{ topic.comment_count }} comments • {{ topic.likes }} likes
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="no-activity">No topics yet.</p>
-      {% endif %}
-      
-      <h3>Recent Comments</h3>
-      {% if user_activity.comments %}
-        <ul class="topic-list">
-          {% for comment in user_activity.comments %}
-            <li class="topic-item">
-              <a href="/topic/{{ comment.topic_id }}" class="topic-title">
-                {{ comment.topic_title }}
-              </a>
-              <div class="topic-meta">
-                {{ comment.created_at }}
-              </div>
-              <p style="margin: 5px 0 0 0; color: #444;">{{ comment.comment }}</p>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="no-activity">No comments yet.</p>
-      {% endif %}
-    </div>
-  </div>
-</body>
-</html>
->>>>>>> 3385d1a4a10b35e119367763568324124482c41b
