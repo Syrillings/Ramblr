@@ -1,14 +1,22 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import psycopg2
 import psycopg2.extras
+from werkzeug.utils import secure_filename
 import bcrypt
 import os
+from flask import url_for
 from urllib.parse import urlparse
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = os.path.join('static', 'img', 'profile_pics')
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.secret_key = 'your_secret_key'
 
 DATABASE_URL = "postgresql://postgres:sinenn@localhost:5432/Ramblr"
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
 
 def get_db_connection():
     conn = psycopg2.connect(DATABASE_URL)
@@ -235,7 +243,6 @@ def profile(username=None):
             user_profile = cursor.fetchone()
             
             if not user_profile:
-                conn.close()
                 return "User not found", 404
             
             cursor.execute('SELECT COUNT(*) FROM topics WHERE username = %s', (username,))
@@ -271,7 +278,8 @@ def profile(username=None):
             topics = [dict(zip(['id', 'title', 'created_at', 'comment_count', 'likes'], row)) for row in cursor.fetchall()]
             
             cursor.execute('''
-                SELECT c.topic_id, c.content, TO_CHAR(c.created_at, 'YYYY-MM-DD HH24:MI') as created_at, t.title as topic_title, u.username as user_username
+                SELECT c.topic_id, c.content, TO_CHAR(c.created_at, 'YYYY-MM-DD HH24:MI') as created_at, 
+                       t.title as topic_title, u.username as user_username
                 FROM comments c
                 JOIN topics t ON c.topic_id = t.id
                 JOIN users u ON c.user_id = u.id
@@ -281,7 +289,15 @@ def profile(username=None):
             ''', (username,))
             comments = [dict(zip(['topic_id', 'content', 'created_at', 'topic_title', 'user_username'], row)) for row in cursor.fetchall()]
         
-        conn.close()
+        profile_pic_url = url_for("static", filename=f"img/profile_pics/{username}.png")
+        profile_pic_folder = os.path.join(app.static_folder, "img", "profile_pics")
+        user_pic_filename = f"{username}.png"
+        user_pic_path = os.path.join(profile_pic_folder, user_pic_filename)
+
+        if os.path.exists(user_pic_path):
+            profile_pic_url = url_for("static", filename=f"img/profile_pics/{username}.png")
+        else:
+            profile_pic_url = url_for("static", filename="img/profile_pics/default.jpg")
         
         return render_template('profile.html',
                              user_profile=dict(zip(['id', 'username', 'email'], user_profile)),
@@ -293,7 +309,8 @@ def profile(username=None):
                              user_activity={
                                  'topics': topics,
                                  'comments': comments
-                             })
+                             },
+                             profile_pic_url=profile_pic_url)
     except Exception as e:
         conn.rollback()
         return f"An error occurred: {e}"
@@ -371,6 +388,48 @@ def comment(topic_id):
 @app.route('/')
 def landingPage():
     return render_template('landingPage.html')
+
+@app.route('/upload_profile_pic', methods=['POST'])
+def upload_profile_pic():
+    if 'profile_pic' not in request.files:
+        print('No file part')
+
+    file = request.files['profile_pic']
+    if file.filename == '':
+      print('No selected file')
+
+    if file and allowed_file(file.filename):
+        user_id = session.get('user_id')
+        if not user_id:
+            return 'You must be logged in.'
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users WHERE id = %s", (user_id,))
+        username = cur.fetchone()[0]
+        cur.close()
+
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        safe_username = secure_filename(username)  
+        filename = f"{safe_username}.{ext}"
+
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+        relative_path = f"img/profile_pics/{filename}"
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE users SET profile_pic = %s WHERE id = %s",
+            (relative_path, user_id)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return 'Profile picture updated!'
+
+    return 'File type not allowed'
+
 
 def init_db():
     conn = get_db_connection()
