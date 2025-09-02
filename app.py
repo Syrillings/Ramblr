@@ -1,18 +1,20 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import psycopg2
+from dotenv import load_dotenv
 import psycopg2.extras
 from werkzeug.utils import secure_filename
 import bcrypt
 import os
+import os
 from flask import url_for
 from urllib.parse import urlparse
 
+load_dotenv()
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'img', 'profile_pics')
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
-app.secret_key = 'your_secret_key'
-
-DATABASE_URL = "postgresql://postgres:sinenn@localhost:5432/Ramblr"
+app.secret_key = os.getenv("SECRET_KEY")
+DATABASE_URL = os.getenv("DB_URL")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
