@@ -128,66 +128,102 @@ def post():
 
 @app.route('/home', methods=['GET'])
 def home():
+    if 'username' not in session:
+        return redirect('/login')
+    
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-            # Get topics with like counts
+            # Get the current user's profile picture URL for the nav bar
             cursor.execute('''
-                SELECT topics.id, topics.username, topics.title, topics.content,
-                       COUNT(likes.id) AS like_count
-                FROM topics
-                LEFT JOIN likes ON topics.id = likes.topic_id
-                GROUP BY topics.id
-                ORDER BY topics.id DESC
-            ''')
-            topics_raw = cursor.fetchall()
-            user_liked_topic_ids = set()
-            topics = []
+                SELECT username, profile_pic 
+                FROM users 
+                WHERE id = %s
+            ''', (session['user_id'],))
+            current_user_data = cursor.fetchone()
             
-            for topic in topics_raw:
-                topic_id, username, title, content, like_count = topic
-                truncated_content = content[:250] + '...' if len(content) > 40 else content
-                liked_by_user = topic_id in user_liked_topic_ids
-
-                topics.append({
-                    'id': topic_id,
-                    'username': username,
-                    'title': title,
-                    'truncated_content': truncated_content,
-                    'full_content': content,
-                    'likes': like_count,
-                    'liked_by_user': liked_by_user
-                })
-
-           
-            cursor.execute("""
-            SELECT c.topic_id, u.username, c.content 
-            FROM comments c
-            JOIN users u ON c.user_id = u.id
-        """)
-
-            all_comments = cursor.fetchall()
+            # Get all topics with like and comment counts and author's profile pic
+            cursor.execute('''
+                SELECT t.id, t.title, t.content, t.username, t.created_at,
+                       u.profile_pic as author_profile_pic,
+                       (SELECT COUNT(*) FROM likes WHERE topic_id = t.id) as like_count,
+                       (SELECT COUNT(*) FROM comments WHERE topic_id = t.id) as comment_count
+                FROM topics t
+                JOIN users u ON t.username = u.username
+                ORDER BY t.created_at DESC
+            ''')
+            topics_data = cursor.fetchall()
+            
+            # Process topics to add truncated_content and profile pic URL
+            processed_topics = []
+            for topic in topics_data:
+                topic_dict = dict(topic)
+                topic_dict['truncated_content'] = (topic['content'][:250] + '...') if len(topic['content']) > 250 else topic['content']
+                
+                # Set the author's profile picture URL
+                if topic['author_profile_pic']:
+                    topic_dict['author_profile_pic_url'] = url_for('static', filename=topic['author_profile_pic'])
+                else:
+                    # Check if default profile picture exists for the author
+                    profile_pic_folder = os.path.join(app.static_folder, "img", "profile_pics")
+                    default_pic_path = os.path.join(profile_pic_folder, f"{topic['username']}.png")
+                    if os.path.exists(default_pic_path):
+                        topic_dict['author_profile_pic_url'] = url_for('static', filename=f"img/profile_pics/{topic['username']}.png")
+                    else:
+                        topic_dict['author_profile_pic_url'] = url_for('static', filename="img/profile_pics/default.jpg")
+                
+                processed_topics.append(topic_dict)
+            
+            # Get like status for each topic
+            liked_topics = set()
+            cursor.execute('''
+                SELECT topic_id FROM likes 
+                WHERE user_id = %s
+            ''', (session['user_id'],))
+            for row in cursor.fetchall():
+                liked_topics.add(row['topic_id'])
+            
+            # Get comments for each topic
+            cursor.execute('''
+                SELECT c.topic_id, u.username, c.content 
+                FROM comments c
+                JOIN users u ON c.user_id = u.id
+                ORDER BY c.created_at DESC
+            ''')
+            
             comments_dict = {}
-            for topic_id, username, content in all_comments:
+            for topic_id, username, content in cursor.fetchall():
                 if topic_id not in comments_dict:
                     comments_dict[topic_id] = []
-                if len(comments_dict[topic_id]) < 3:
+                if len(comments_dict[topic_id]) < 3:  # Only keep the 3 most recent comments
                     comments_dict[topic_id].append((username, content))
-
-                      
-            if 'user_id' in session:
-                cursor.execute("SELECT topic_id FROM likes WHERE user_id = %s", (session['user_id'],))
-                user_liked_topic_ids = {row[0] for row in cursor.fetchall()}
-
-        conn.close()
-        return render_template('home.html', topics=topics, comments=comments_dict, user_liked_topic_ids=user_liked_topic_ids)
+        
+        # Determine current user's profile picture URL for the nav bar
+        current_user_profile_pic = None
+        if current_user_data['profile_pic']:
+            current_user_profile_pic = url_for('static', filename=current_user_data['profile_pic'])
+        else:
+            profile_pic_folder = os.path.join(app.static_folder, "img", "profile_pics")
+            user_pic_filename = f"{current_user_data['username']}.png"
+            user_pic_path = os.path.join(profile_pic_folder, user_pic_filename)
+            
+            if os.path.exists(user_pic_path):
+                current_user_profile_pic = url_for('static', filename=f"img/profile_pics/{current_user_data['username']}.png")
+            else:
+                current_user_profile_pic = url_for('static', filename="img/profile_pics/default.jpg")
+        
+        return render_template('home.html', 
+                             topics=processed_topics,
+                             comments=comments_dict,
+                             liked_topics=liked_topics,
+                             current_user_profile_pic=current_user_profile_pic,
+                             username=session['username'])
+                             
     except Exception as e:
         conn.rollback()
         return f"An error occurred: {e}"
     finally:
         conn.close()
-
-        
 
 @app.route('/like/<int:topic_id>', methods=['POST'])
 def like(topic_id):
@@ -394,44 +430,52 @@ def landingPage():
 @app.route('/upload_profile_pic', methods=['POST'])
 def upload_profile_pic():
     if 'profile_pic' not in request.files:
-        print('No file part')
+        return redirect(request.referrer or url_for('profile'))
 
     file = request.files['profile_pic']
     if file.filename == '':
-      print('No selected file')
+        return redirect(request.referrer or url_for('profile'))
 
     if file and allowed_file(file.filename):
         user_id = session.get('user_id')
         if not user_id:
-            return 'You must be logged in.'
+            return redirect('/login')
 
         conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT username FROM users WHERE id = %s", (user_id,))
-        username = cur.fetchone()[0]
-        cur.close()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT username FROM users WHERE id = %s", (user_id,))
+                username = cur.fetchone()[0]
 
-        ext = file.filename.rsplit('.', 1)[1].lower()
-        safe_username = secure_filename(username)  
-        filename = f"{safe_username}.{ext}"
+                # Get the file extension
+                ext = file.filename.rsplit('.', 1)[1].lower()
+                safe_username = secure_filename(username)
+                filename = f"{safe_username}.{ext}"
 
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+                # Save the file
+                if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                    os.makedirs(app.config['UPLOAD_FOLDER'])
+                    
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
 
-        relative_path = f"img/profile_pics/{filename}"
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE users SET profile_pic = %s WHERE id = %s",
-            (relative_path, user_id)
-        )
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        return 'Profile picture updated!'
-
-    return 'File type not allowed'
-
+                # Update the database with the new filename
+                relative_path = f"img/profile_pics/{filename}"
+                cur.execute(
+                    "UPDATE users SET profile_pic = %s WHERE id = %s",
+                    (relative_path, user_id)
+                )
+                conn.commit()
+                
+            return redirect(url_for('profile', username=username))
+            
+        except Exception as e:
+            conn.rollback()
+            return f"An error occurred: {e}"
+        finally:
+            conn.close()
+            
+    return 'File type not allowed', 400
 
 def init_db():
     conn = get_db_connection()
