@@ -203,14 +203,45 @@ def home():
         if current_user_data['profile_pic']:
             current_user_profile_pic = url_for('static', filename=f"img/profile_pics/{current_user_data['profile_pic']}")
         else:
-            profile_pic_folder = os.path.join(app.static_folder, "img", "profile_pics")
-            user_pic_filename = f"{current_user_data['profile_pic']}"
-            user_pic_path = os.path.join(profile_pic_folder, user_pic_filename)
+            current_user_profile_pic = url_for('static', filename="img/profile_pics/default.jpg")
+
+        # Process topics to add truncated_content and profile pic URL
+        processed_topics = []
+        for topic in topics_data:
+            topic_dict = dict(topic)
+            topic_dict['truncated_content'] = (topic['content'][:250] + '...') if len(topic['content']) > 250 else topic['content']
             
-            if os.path.exists(user_pic_path):
-                current_user_profile_pic = url_for('static', filename=f"img/profile_pics/{current_user_data['profile_pic']}")
+            # Set the author's profile picture URL
+            if topic['author_profile_pic']:
+                topic_dict['author_profile_pic_url'] = url_for('static', filename=f"img/profile_pics/{topic['author_profile_pic']}")
             else:
-                current_user_profile_pic = url_for('static', filename="img/profile_pics/default.jpg")
+                topic_dict['author_profile_pic_url'] = url_for('static', filename="img/profile_pics/default.jpg")
+            
+            processed_topics.append(topic_dict)
+            
+            # Get like status for each topic
+            liked_topics = set()
+            cursor.execute('''
+                SELECT topic_id FROM likes 
+                WHERE user_id = %s
+            ''', (session['user_id'],))
+            for row in cursor.fetchall():
+                liked_topics.add(row['topic_id'])
+            
+            # Get comments for each topic
+            cursor.execute('''
+                SELECT c.topic_id, u.username, c.content 
+                FROM comments c
+                JOIN users u ON c.user_id = u.id
+                ORDER BY c.created_at DESC
+            ''')
+            
+            comments_dict = {}
+            for topic_id, username, content in cursor.fetchall():
+                if topic_id not in comments_dict:
+                    comments_dict[topic_id] = []
+                if len(comments_dict[topic_id]) < 3:  # Only keep the 3 most recent comments
+                    comments_dict[topic_id].append((username, content))
         
         return render_template('home.html', 
                              topics=processed_topics,
