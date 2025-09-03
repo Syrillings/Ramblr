@@ -477,6 +477,59 @@ def upload_profile_pic():
             
     return 'File type not allowed', 400
 
+@app.route('/edit/<int:topic_id>', methods=['GET', 'POST'])
+def edit_topic(topic_id):
+    if 'username' not in session:
+        return redirect('/login')
+    
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+            cursor.execute('SELECT * FROM topics WHERE id = %s AND username = %s', 
+                         (topic_id, session['username']))
+            topic = cursor.fetchone()
+            
+            if not topic:
+                return "Topic not found or unauthorized", 404
+            
+            if request.method == 'POST':
+                title = request.form['title']
+                content = request.form['content']
+                
+                cursor.execute(
+                    'UPDATE topics SET title = %s, content = %s WHERE id = %s',
+                    (title, content, topic_id)
+                )
+                conn.commit()
+                return redirect('/home')
+            
+            return render_template('edit_topic.html', topic=topic)
+    except Exception as e:
+        conn.rollback()
+        return f"An error occurred: {e}"
+    finally:
+        conn.close()
+
+@app.route('/delete/<int:topic_id>', methods=['POST'])
+def delete_topic(topic_id):
+    if 'username' not in session:
+        return redirect('/login')
+    
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute('DELETE FROM topics WHERE id = %s AND username = %s', 
+                         (topic_id, session['username']))
+            if cursor.rowcount == 0:
+                return "Topic not found or unauthorized", 404
+            conn.commit()
+            return redirect('/home')
+    except Exception as e:
+        conn.rollback()
+        return f"An error occurred: {e}"
+    finally:
+        conn.close()
+
 def init_db():
     conn = get_db_connection()
     try:
@@ -540,5 +593,5 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
