@@ -1,114 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{ title }} - Forum</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
       background-color: #e9efff;
       margin: 0;
       padding: 0;
       color: #333;
+      line-height: 1.6;
     }
     .container {
       max-width: 800px;
-      margin: auto;
-      padding: 20px;
+      margin: 40px auto 60px;
+      padding: 30px 25px;
       background-color: white;
       border-radius: 12px;
-      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 25px;
+      color: #004aad;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+    .back-link:hover {
+      color: #003b8c;
+      text-decoration: underline;
     }
     h2 {
       color: #004aad;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
+      font-weight: 700;
+      font-size: 2.2em;
     }
-    .author {
-      font-size: 14px;
-      color: #777;
-      margin-bottom: 20px;
+    .author-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      color: #555;
+    }
+    .author-info img {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #004aad;
+      box-shadow: 0 0 8px rgba(0, 74, 173, 0.3);
+    }
+    .author-name {
+      font-weight: 700;
+      font-size: 1.1em;
+      color: #004aad;
+      text-decoration: none;
+    }
+    .author-name:hover {
+      text-decoration: underline;
     }
     .content {
-      font-size: 16px;
-      line-height: 1.6;
-      margin-bottom: 20px;
+      font-size: 18px;
+      color: #444;
+      margin-bottom: 30px;
+      white-space: pre-wrap;      /* Preserve line breaks & wrap text */
+      word-wrap: break-word;      /* Break long words (legacy) */
+      overflow-wrap: break-word; /* preserve line breaks */
     }
     .like-section {
-      margin-bottom: 20px;
+      margin-bottom: 30px;
     }
     .like-button {
       background: none;
       border: none;
       color: #004aad;
-      font-size: 18px;
+      font-size: 20px;
       cursor: pointer;
-      transition: color 0.3s;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.3s ease;
+      padding: 6px 12px;
+      border-radius: 8px;
+      box-shadow: 0 3px 8px rgba(0, 74, 173, 0.15);
     }
     .like-button:hover {
       color: #003b8c;
+      box-shadow: 0 5px 15px rgba(0, 59, 140, 0.3);
+    }
+    .like-count {
+      font-size: 20px;
+      font-weight: 700;
     }
     .like-display {
-      font-size: 18px;
+      font-size: 20px;
       color: #004aad;
+      font-weight: 700;
+      display: inline-block;
+      margin-right: 10px;
+    }
+    .comment-section {
+      margin-top: 40px;
+    }
+    .comment-section h4 {
+      font-weight: 700;
+      color: #004aad;
+      margin-bottom: 20px;
+      font-size: 1.4em;
     }
     .comment {
-      margin: 10px 0;
-      padding: 10px;
       background: #f7f9ff;
-      border-radius: 6px;
-      border-left: 3px solid #d0e0ff;
+      border-left: 4px solid #d0e0ff;
+      border-radius: 8px;
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      color: #333;
+      font-size: 16px;
+      word-wrap: break-word;
+    }
+    .comment strong {
+      color: #004aad;
+      margin-right: 6px;
+    }
+    .comment strong a {
+      color: #004aad;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .comment strong a:hover {
+      text-decoration: underline;
     }
     .comment-form {
-      margin-top: 20px;
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
     .comment-form input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      border-radius: 4px;
+      padding: 14px 16px;
+      font-size: 16px;
+      border-radius: 8px;
       border: 1px solid #ccc;
-      margin-bottom: 10px;
+      transition: border-color 0.3s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .comment-form input[type="text"]:focus {
+      border-color: #004aad;
+      outline: none;
     }
     .comment-form button {
-      padding: 10px;
+      align-self: flex-start;
+      padding: 12px 28px;
       background-color: #004aad;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 16px;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 3px 8px rgba(0, 74, 173, 0.2);
     }
     .comment-form button:hover {
       background-color: #003b8c;
+      box-shadow: 0 5px 15px rgba(0, 59, 140, 0.4);
     }
-    .back-link {
-      color: #004aad;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .back-link:hover {
-      text-decoration: underline;
+    /* Responsive */
+    @media (max-width: 600px) {
+      .container {
+        margin: 20px 15px 40px;
+        padding: 20px 15px;
+      }
+      h2 {
+        font-size: 1.8em;
+      }
+      .author-info img {
+        width: 48px;
+        height: 48px;
+      }
+      .content {
+        font-size: 16px;
+      }
+      .like-button {
+        font-size: 18px;
+        padding: 6px 14px;
+      }
+      .comment-form button {
+        padding: 10px 24px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <a href="/home" class="back-link">← Back to Home</a>
+
+  
+    
+    <div class="author-info">
+      <img src="{{ url_for('static', filename='img/profile_pics/' ~ profile_pic) }}" alt="Profile Picture">
+
+      <a href="/profile/{{ username }}" class="author-name">{{ username }}</a>
+    </div>
     <h2>{{ title }}</h2>
-    <p class="author"><strong>Posted by:</strong> <a href="/profile/{{ username }}" style="color: #004aad; text-decoration: none;">{{ username }}</a></p>
+
     <div class="content">
-      <p>{{ content }}</p>
+      {{ content | trim}}
     </div>
 
-    <!-- Like button section -->
     <div class="like-section">
       {% if session.get('user_id') %}
         <form method="POST" action="/like/{{ topic_id }}" style="display: inline;">
-          <button type="submit" class="like-button">
+          <button type="submit" class="like-button" aria-label="Like this post">
             {% if user_has_liked %}
-              ❤️ {{ like_count }}
+              ❤️
             {% else %}
-              🤍 {{ like_count }}
+              🤍
             {% endif %}
+            <span class="like-count">{{ like_count }}</span>
           </button>
         </form>
       {% else %}
@@ -117,28 +234,26 @@
       {% endif %}
     </div>
 
-    <hr>
-    <h4>Comments:</h4>
-    {% if comments %}
-      {% for comment in comments %}
-        <div class="comment">
-          <strong><a href="/profile/{{ comment[2] }}" style="color: #004aad; text-decoration: none;">{{ comment[2] }}</a>:</strong> {{ comment[3] }}
-        </div>
-      {% endfor %}
-    {% else %}
-      <p>No comments yet. Be the first to comment!</p>
-    {% endif %}
+    <div class="comment-section">
+      <h4>Comments</h4>
+      {% if comments %}
+        {% for comment in comments %}
+          <div class="comment">
+            <strong><a href="/profile/{{ comment[2] }}">{{ comment[2] }}</a>:</strong> {{ comment[3] }}
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No comments yet. Be the first to comment!</p>
+      {% endif %}
 
-    <!-- Add a comment -->
-    <div class="comment-form">
-      <h4>Add a Comment:</h4>
-      <form action="/comment/{{ topic_id }}" method="POST">
-        <input type="text" name="comment" placeholder="Write a comment..." required>
-        <button type="submit">Post Comment</button>
-      </form>
+      <div class="comment-form">
+        <h4>Add a Comment</h4>
+        <form action="/comment/{{ topic_id }}" method="POST">
+          <input type="text" name="comment" placeholder="Write a comment..." required />
+          <button type="submit">Post Comment</button>
+        </form>
+      </div>
     </div>
-
-    <p><a href="/home" class="back-link">← Back to Home</a></p>
   </div>
 </body>
 </html>

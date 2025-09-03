@@ -75,8 +75,11 @@
     }
 
     .form-group textarea {
-      min-height: 150px;
-      resize: vertical;
+       resize: vertical;
+        min-height: 200px;
+        word-wrap: break-word;       /* Break long words */
+        overflow-wrap: break-word;   /* Modern standard */
+        white-space: pre-wrap;  
     }
 
     .submit-btn {
