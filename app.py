@@ -162,14 +162,13 @@ def home():
                 
                 # Set the author's profile picture URL
                 if topic['author_profile_pic']:
-                    topic_dict['author_profile_pic_url'] = url_for('static', filename=topic['author_profile_pic'])
+                    topic_dict['author_profile_pic_url'] = url_for('static', filename=f"img/profile_pics/{topic['author_profile_pic']}")
                 else:
                     # Check if default profile picture exists for the author
                     profile_pic_folder = os.path.join(app.static_folder, "img", "profile_pics")
-                    default_pic_path = os.path.join(profile_pic_folder, topic['author_profile_pic'])
+                    default_pic_path = os.path.join(profile_pic_folder, f"{topic['username']}.png")  # Use username instead
                     if os.path.exists(default_pic_path):
-
-                        topic_dict['author_profile_pic_url'] = url_for('static', filename=f"img/profile_pics/{topic['author_profile_pic']}")
+                        topic_dict['author_profile_pic_url'] = url_for('static', filename=f"img/profile_pics/{topic['username']}.png")
                     else:
                         topic_dict['author_profile_pic_url'] = url_for('static', filename="img/profile_pics/default.jpg")
                 
